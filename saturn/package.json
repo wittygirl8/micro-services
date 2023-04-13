@@ -1,0 +1,30 @@
+{
+    "name": "customer",
+    "version": "",
+    "description": "",
+    "scripts": {
+        "test": "jest --coverage tests",
+        "show-coverage": "open coverage/lcov-report/index.html"
+    },
+    "author": "",
+    "license": "",
+    "devDependencies": {
+        "@babel/core": "^7.10.2",
+        "@babel/preset-env": "^7.10.2",
+        "@types/jest": "^26.0.3",
+        "babel-jest": "^26.0.1",
+        "jest": "^26.0.1",
+        "serverless-aws-alias": "^1.8.0",
+        "serverless-offline": "^6.8.0",
+        "serverless-plugin-custom-roles": "^1.1.1",
+        "serverless-stack-output": "^0.2.3"
+    },
+    "dependencies": {
+        "aws-xray-sdk": "^3.3.3",
+        "axios": "^0.19.2",
+        "btoa": "^1.2.1",
+        "dotenv": "^8.2.0",
+        "qs": "^6.9.4",
+        "stripe": "^8.121.0"
+    }
+}

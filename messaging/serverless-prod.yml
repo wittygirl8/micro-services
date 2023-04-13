@@ -1,0 +1,96 @@
+service: messaging-consumers-b
+
+plugins:
+    - serverless-bundle
+package:
+    individually: true
+provider:
+    name: aws
+    runtime: nodejs12.x
+    region: eu-west-1
+    timeout: 30
+    vpc:
+        securityGroupIds:
+            - ${opt:SECURITY_GROUP_ID,'sg-096f90a130ecc3b3b'}
+        subnetIds:
+            - ${opt:SUBNET_A,'subnet-0473ef53ddb4c55de'}
+            - ${opt:SUBNET_B,'subnet-0ad4247942baa5f8c'}
+    environment:
+        STAGE: ${self:custom.stage}
+        ALIAS: ${self:custom.alias}
+        T2S_API_TOKEN: ${file(../../resources/credentials/api-tokens.yml):t2s-api-token-${self:custom.alias}}
+        DB_HOST: ${file(../../resources/credentials/db.yml):db-host-${self:custom.alias}}
+        DB_DATABASE: ${file(../../resources/credentials/db.yml):db-database-${self:custom.alias}}
+        DB_USERNAME: ${file(../../resources/credentials/db.yml):db-username-${self:custom.alias}}
+        DB_PASSWORD: ${file(../../resources/credentials/db.yml):db-password-${self:custom.alias}}
+        OPTOMANY_PAYLOAD_ENCRYPTION_KEY: ${file(../../resources/credentials/switich-encryption.yml):optomany-payload-encryption-key-${self:custom.alias}}
+        MERCHANT_STOREID_OPTO: ${file(../../resources/credentials/tokenisation.yml):opto-merchant-store-id-${self:custom.alias}}
+        MERCHANT_SIGNATUREKEY_ID_OPTO: ${file(../../resources/credentials/tokenisation.yml):opto-merchant-signature-key-id-${self:custom.alias}}
+        MERCHANT_SIGNATUREKEY_OPTO: ${file(../../resources/credentials/tokenisation.yml):opto-merchant-signature-key-${self:custom.alias}}
+        COUNTRY_ID_OPTO: ${file(../../resources/credentials/tokenisation.yml):opto-country-id-${self:custom.alias}}
+        MERCHANT_DEPARTMENTID_OPTO: ${file(../../resources/credentials/tokenisation.yml):opto-merchant-department-id-${self:custom.alias}}
+        DATMAN_SES_HANDLER_API_KEY: ${file(../../resources/credentials/ses.yml):datman-ses-api-key-${self:custom.alias}}
+        MX_PAYLOAD_ENCRYPTION_KEY: ${file(../../resources/credentials/tokenisation.yml):mx-payload-encryption-key-${self:custom.alias}}
+        OPTOMANY_GATEWAY_URL: ${file(../../resources/credentials/tokenisation.yml):optomany-gateway-url-${self:custom.alias}}
+        SIMULATOR_SUCCESS: 'success@simulator.amazonses.com' #Override emails for non production. Before changing check with Lead or Devops
+        EARTH_PAYLOAD_ENCRYPTION_KEY: ${file(../../resources/credentials/switich-encryption.yml):earth-payload-encryption-key-${self:custom.alias}}
+        EARTH_REFUND_API: ${file(../../resources/credentials/domains.yml):earth-refund-api-endpoint-${self:custom.alias}}
+        URANUS_USERNAME: ${file(../../resources/credentials/tokenisation.yml):uranus-username-${self:custom.alias}}
+        URANUS_PASSWORD: ${file(../../resources/credentials/tokenisation.yml):uranus-password-${self:custom.alias}}
+        JUPITOR_API_ENDPOINT: ${file(../../resources/credentials/domains.yml):jupitor-api-endpoint-${self:custom.alias}}
+        JUPITOR_USERNAME: ${file(../../resources/credentials/tokenisation.yml):jupitor-username-${self:custom.alias}}
+        JUPITOR_PASSWORD: ${file(../../resources/credentials/tokenisation.yml):jupitor-password-${self:custom.alias}}
+        JUPITOR_JUDO_ID: ${file(../../resources/credentials/tokenisation.yml):jupitor-judo-id-${self:custom.alias}}
+        URANUS_API_ENDPOINT: ${file(../../resources/credentials/domains.yml):uranus-api-endpoint-${self:custom.alias}}
+        MERCHANT_SIGNATURE_KEY_ID: ${file(../../resources/credentials/tokenisation.yml):merchant-signature-key-id-${self:custom.alias}}
+        FH_SIGNATURE: ${file(../../resources/credentials/tokenisation.yml):fh-signature-${self:custom.alias}}
+        FH_MERCHANT_STORE_ID: ${file(../../resources/credentials/tokenisation.yml):fh-merchant-store-id-${self:custom.alias}}
+        FH_MERCHANT_DEPARTMENT_ID: ${file(../../resources/credentials/tokenisation.yml):fh-merchant-department-id-${self:custom.alias}}
+        T2S_SIGNATURE: ${file(../../resources/credentials/tokenisation.yml):t2s-signature-${self:custom.alias}}
+        T2S_MERCHANT_STORE_ID: ${file(../../resources/credentials/tokenisation.yml):t2s-merchant-store-id-${self:custom.alias}}
+        T2S_MERCHANT_DEPARTMENT_ID: ${file(../../resources/credentials/tokenisation.yml):t2s-merchant-department-id-${self:custom.alias}}
+        SIGNATURE_TYPE: ${file(../../resources/credentials/tokenisation.yml):signature-type-${self:custom.alias}}
+        SAGE_PAY_REFUND_URL: ${file(../../resources/credentials/domains.yml):sagepay-refund-api-endpoint-${self:custom.alias}}
+        EARTH_API_ENDPOINT: ${file(../../resources/credentials/domains.yml):earth-api-endpoint-${self:custom.alias}}
+        PUSH_NOTIFICATION_ENDPOINTS: ${ssm:/cp/${self:custom.stage}/cp/PushNotificationEndpoint}
+        PUSH_NOTIFICATION_ENDPOINTS_API_KEY: ${ssm:/cp/${self:custom.stage}/cp/PushNotificationEndpointsApiKey}
+        BANK_TOKENIZATION_API_KEY: ${ssm:/gateway/${self:custom.stage}/gateway/BankTokenizationAPIKey~true}
+        PIN_PAYMENT_BASE_URL: ${ssm:/gateway/${self:custom.stage}/gateway/PinPaymentBaseUrl}
+        PIN_PAYMENT_API_KEY: ${ssm:/gateway/${self:custom.stage}/gateway/PinPaymentAPIKey~true}
+
+    iamRoleStatements:
+        - Effect: Allow
+          Action:
+              - sqs:*
+              - ses:*
+              - sns:*
+              - ssm:GetParameters
+          Resource: '*'
+
+custom:
+    defaultStage: ${file(../../../serverless.common.yml):custom.defaultStage}
+    stage: ${file(../../../serverless.common.yml):custom.stage}
+    baseApiPath: ${file(../../../serverless.common.yml):custom.baseApiPath}
+    alias: ${file(../../../serverless.common.yml):custom.alias}
+    messagingEntityPath: ${self:custom.baseApiPath}/messaging
+    bundle:
+        forceExclude:
+            - datman-helpers
+            - datman-models
+        linting: false #Ignore for compilation
+        ignorePackages:
+            - pg-hstore
+            # only on aws
+            - ../../layers/helper_lib/src
+            - ../../layers/models_lib/src
+    cronoptions:
+        prod: true
+        dev: false
+        pre-prod: false
+        cp-e2e: false
+        stage: false
+        other: false
+    cronenabled: ${self:custom.cronoptions.${self:custom.stage}, self:custom.cronoptions.other}
+
+functions:
+    - ${file(functions.yml)}

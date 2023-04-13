@@ -1,0 +1,156 @@
+GetTransactionsPublisher:
+    handler: functions/pdqPosTransactions/get-transactions-handler.getTransactions
+    tracing: Active # enable tracing
+    events:
+        - schedule: rate(30 minutes)
+        - http:
+              path: pdqtransaction/publish
+              method: get
+              cors: true
+    environment:
+        PDQ_TRANSACTION_QUEUE_URL:
+            'Fn::ImportValue': AffiliatePdqTransactionQueueUrl-${self:custom.alias}
+        LOCAL_QUEUE_URL: http://localhost:9324/queue/AffiliatePdqTransactionQueue
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+
+getTransactionsConsumer:
+    handler: functions/pdqPosTransactions/pdq-service.main
+    iamRoleStatementsName: pdq
+    tracing: Active # enable tracing
+    timeout: 900
+    reservedConcurrency: 5
+    events:
+        - sqs:
+              arn:
+                  'Fn::ImportValue': AffiliatePdqTransactionQueueArn-${self:custom.alias}
+              batchSize: 10
+    environment:
+        PDQ_TRANSACTION_QUEUE_URL:
+            'Fn::ImportValue': AffiliatePdqTransactionQueueUrl-${self:custom.alias}
+        LOCAL_QUEUE_URL: http://localhost:9324/queue/AffiliatePdqTransactionQueue
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+
+GetTransactionsPDLQ:
+    handler: functions/pdqPosTransactions/pdq-transaction-dlq.main
+    events:
+        - sqs:
+              arn:
+                  'Fn::ImportValue': AffiliatePdqTransactionQueueDLQArn-${self:custom.alias}
+              batchSize: 1
+
+getDayMinusPdqTransactionsPublisher:
+    handler: functions/pdqPosTransactionDayMinus/day-minus-pdq-transactions-publisher.getTransactions
+    tracing: Active # enable tracing
+    events:
+        - schedule:
+              rate: cron(0 6 * * ? *)
+    environment:
+        PDQ_TRANSACTION_QUEUE_URL:
+            'Fn::ImportValue': DayminusPdqTransactionQueueUrl-${self:custom.alias}
+        LOCAL_QUEUE_URL: http://localhost:9324/queue/DayminusPdqTransactionQueue
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+
+getDayMinusPdqTransactionsConsumer:
+    handler: functions/pdqPosTransactionDayMinus/day-minus-pdq-service.main
+    iamRoleStatementsName: pdq
+    tracing: Active # enable tracing
+    timeout: 900
+    reservedConcurrency: 5
+    events:
+        - sqs:
+              arn:
+                  'Fn::ImportValue': DayminusPdqTransactionQueueArn-${self:custom.alias}
+              batchSize: 10
+    environment:
+        PDQ_TRANSACTION_QUEUE_URL:
+            'Fn::ImportValue': DayminusPdqTransactionQueueUrl-${self:custom.alias}
+        LOCAL_QUEUE_URL: http://localhost:9324/queue/DayminusPdqTransactionQueue
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+
+getDayMinusPdqTransactionsDLQ:
+    handler: functions/pdqPosTransactionDayMinus/pdq-transaction-dlq.main
+    events:
+        - sqs:
+              arn:
+                  'Fn::ImportValue': DayminusPdqTransactionQueueDLQArn-${self:custom.alias}
+              batchSize: 1
+
+processPdqPayments:
+    handler: functions/pdqDeviceTransactions/process-pdq-payments-handler.processPdqPayments
+    tracing: Active # enable tracing
+    events:
+        - http:
+              path: ${self:custom.dnaEntityPath}/payments
+              method: post
+              cors: true
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+getPdqTransactions:
+    handler: functions/pdqDeviceTransactions/get-pdq-transactions-handler.getPdqTransactions
+    tracing: Active # enable tracing
+    events:
+        - http:
+              path: ${self:custom.dnaEntityPath}/get-transactions
+              method: get
+              cors: true
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+DnaCreateSale:
+    handler: functions/dnaHostedForm/dna-create-sale-handler.dnaCreateSale
+    tracing: Active # enable tracing
+    events:
+        - http:
+              path: ${self:custom.dnaEntityPath}/hosted-form/sale
+              method: post
+              cors: true
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+DnaNotificationWebhook:
+    handler: functions/dnaHostedForm/dna-notification-webhook-handler.dnaNotificationWebhook
+    events:
+        - http:
+              path: ${self:custom.dnaEntityPath}/hosted-form/webhook
+              method: post
+              cors: true
+    environment:
+        QUEUE_URL:
+            'Fn::ImportValue': NotifyOrderStatusQueueUrl-${self:custom.alias}
+        LOCAL_QUEUE_URL: http://localhost:9324/queue/queueFifo.fifo
+        QUEUE_URL_MASTERTOKEN_V2:
+            'Fn::ImportValue': MasterTokenV2QueueUrl-${self:custom.alias}
+        LOCAL_QUEUE_URL_MASTERTOKEN_V2: http://localhost:9324/queue/queueFifo
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+DnaRefund:
+    handler: functions/dnaHostedForm/dna-refund-handler.dnaRefundHandler
+    events:
+        - http:
+              path: ${self:custom.dnaEntityPath}/hosted-form/refund
+              method: post
+              cors: true
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+DnaExpressPay:
+    handler: functions/dnaHostedForm/dna-express-pay-handler.dnaExpressPay
+    tracing: Active # enable tracing
+    events:
+        - http:
+              path: ${self:custom.dnaEntityPath}/express-pay
+              method: post
+              cors: true
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}

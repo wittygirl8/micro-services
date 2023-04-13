@@ -1,0 +1,90 @@
+test:
+    handler: functions/pay-handler.pay
+    events:
+        - http:
+              path: ${self:custom.switchEntityPath}/pay
+              method: get
+              cors: true
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+verifyPayment:
+    handler: functions/verify_payment_status.verifyPayment
+    events:
+        - http:
+              path: ${self:custom.switchEntityPath}/verify
+              method: post
+              cors: true
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+decryptData:
+    handler: functions/decrypt-data-handler.decrypt
+    events:
+        - http:
+              path: ${self:custom.switchEntityPath}/decrypt
+              method: post
+              cors: true
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+verifyPaymentStatus:
+    handler: functions/verify_t2s_payment_status.verifyPaymentStatus
+    events:
+        - http:
+              path: ${self:custom.switchEntityPath}/verify-payments
+              method: post
+              cors: true
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+switchGatewayHandler:
+    handler: functions/switch-gateway-handler.switchGateway
+    events:
+        - http:
+              path: ${self:custom.baseApiPath}/payment
+              method: get
+              cors: true
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+
+refundSale:
+    handler: functions/refund-sale-handler.refundSale
+    events:
+        - http:
+              path: ${self:custom.switchEntityPath}/refund
+              method: post
+              cors: true
+    reservedConcurrency: 1
+    environment:
+        REFUND_SALE_SQS_QUEUE_URL:
+            'Fn::ImportValue': RefundSaleQueueUrl-${self:custom.alias}
+        LOCAL_REFUND_SALE_SQS_QUEUE_URL: 'http://localhost:9324/queue/RefundSaleQueue'
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+
+switchPhonePaymentGatewayHandler:
+    handler: functions/phone-payment-switch-gateway-handler.switchPhonePGateway
+    events:
+        - http:
+              path: ${self:custom.baseApiPath}/phone-payment
+              method: get
+              cors: true
+    reservedConcurrency: 1
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+
+gfoGatewayHandler:
+    handler: functions/gfo-handler.gfo
+    events:
+        - http:
+              path: ${self:custom.baseApiPath}/gfo
+              method: post
+              cors: true
+    reservedConcurrency: 1
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}

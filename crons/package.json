@@ -1,0 +1,38 @@
+{
+    "name": "messaging",
+    "version": "",
+    "description": "",
+    "author": "",
+    "license": "",
+    "scripts": {
+        "test": "jest --coverage tests",
+        "show-coverage": "open coverage/lcov-report/index.html"
+    },
+    "devDependencies": {
+        "@babel/core": "^7.10.2",
+        "@babel/preset-env": "^7.10.2",
+        "@types/jest": "^26.0.3",
+        "aws-sdk": "^2.695.0",
+        "babel-jest": "^26.0.1",
+        "jest": "^26.0.1"
+    },
+    "dependencies": {
+        "@aws-sdk/client-ses": "^3.9.0",
+        "@aws-sdk/client-sns": "^3.9.0",
+        "aws-xray-sdk": "^3.3.1",
+        "axios": "^0.19.2",
+        "card-validator": "^8.1.0",
+        "currency-formatter": "^1.5.8",
+        "dotenv": "^8.2.0",
+        "form-data": "^3.0.0",
+        "i": "^0.3.6",
+        "md5": "^2.3.0",
+        "moment": "^2.29.1",
+        "nanoid": "^3.1.22",
+        "npm": "^7.11.2",
+        "php-serialize": "^4.0.2",
+        "query-string": "^6.14.0",
+        "querystring": "^0.2.0",
+        "uuid": "^8.3.2"
+    }
+}

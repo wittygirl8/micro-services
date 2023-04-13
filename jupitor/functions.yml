@@ -1,0 +1,14 @@
+judoWebhookHandler:
+    handler: functions/jupitor_webhook-handler.judoWebhookHandler
+    events:
+        - http:
+              path: ${self:custom.jupitorEntityPath}/judo-webhook
+              method: post
+              cors: true
+    environment:
+        QUEUE_URL:
+            'Fn::ImportValue': NotifyOrderStatusQueueUrl-${self:custom.alias}
+        LOCAL_QUEUE_URL: https://sqs.eu-west-1.amazonaws.com/584634042267/NotifyOrderStatusQueue-stage
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}

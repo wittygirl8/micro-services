@@ -1,0 +1,50 @@
+CreateGfoSale:
+    handler: functions/gfo-sale-handler.CreateGfoSaleHandler
+    events:
+        - http:
+              path: ${self:custom.antarEntityPath}/gfo/sale
+              method: post
+              cors: true
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+RefundSale:
+    handler: functions/refund-sale-handler.RefundSale
+    events:
+        - http:
+              path: ${self:custom.antarEntityPath}/gfo/refund
+              method: post
+              cors: true
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+AntarOnboarding:
+    handler: functions/adyen-onboarding-handler.AntarOnboarding
+    events:
+        - http:
+              path: ${self:custom.antarEntityPath}/onboarding
+              method: post
+              cors: true
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+adyenNotificationWebhookHandler:
+    handler: functions/adyen-notification-webhook-handler.adyenNotificationWebhookHandler
+    events:
+        - http:
+              path: ${self:custom.antarEntityPath}/notification-webhook
+              method: post
+              cors: true
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+adyenPlatformNotificationWebhookHandler:
+    handler: functions/adyen-platform-notification-webhook-handler.adyenPlatformNotificationWebhookHandler
+    events:
+        - http:
+              path: ${self:custom.antarEntityPath}/platform-notification-webhook
+              method: post
+              cors: true
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}

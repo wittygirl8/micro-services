@@ -1,0 +1,69 @@
+service: datman-saturn
+
+plugins:
+    - serverless-bundle
+    - serverless-aws-alias
+
+provider:
+    name: aws
+    runtime: nodejs12.x
+    region: eu-central-1
+    timeout: 30
+    aliasStage:
+        loggingLevel: 'ERROR'
+        dataTraceEnabled: true
+    vpc:
+        securityGroupIds:
+            - sg-073a508b7b1c42370
+        subnetIds:
+            - subnet-0e2c18bfa9ce75d20
+            - subnet-00053a95b2f4f8287
+            - subnet-0dbf2ccd2e554e05c
+    environment:
+        STAGE: ${self:custom.stage}
+        ALIAS: ${self:custom.alias}
+        DB_HOST: ${file(../../resources/credentials/db.yml):db-host-${self:custom.alias}}
+        DB_DATABASE: ${file(../../resources/credentials/db.yml):db-database-${self:custom.alias}}
+        DB_USERNAME: ${file(../../resources/credentials/db.yml):db-username-${self:custom.alias}}
+        DB_PASSWORD: ${file(../../resources/credentials/db.yml):db-password-${self:custom.alias}}
+        STRIPE_CREDENTIALS: ${file(../../resources/credentials/stripe.yml):stripe-cred-${self:custom.alias}}
+        STRIPE_ENDPOINT: ${file(../../resources/credentials/domains.yml):stripe-endpoint-${self:custom.alias}}
+        STRIPE_PAYLOAD_ENCRYPTION_KEY: ${file(../../resources/credentials/stripe.yml):stripe-payload-encryption-key-${self:custom.alias}}
+        DATMAN_GATEWAY_API_KEY: ${file(../../resources/credentials/stripe.yml):datman-gateway-api-key-${self:custom.alias}}
+    iamRoleStatements:
+        - Effect: Allow
+          Action:
+              - rds-db:connect
+          Resource: 'arn:aws:rds:eu-west-1:584634042267:db-proxy:prx-0fabf58edf359f91e/*'
+        - Effect: Allow
+          Action:
+              - rds-db:connect
+          Resource: 'arn:aws:rds-db:us-east-1:192389957878:dbuser:prx-0c3c9e48938e1674f/*'
+
+custom:
+    defaultStage: ${file(../../../serverless.common.yml):custom.defaultStage}
+    resourcesStages: ${file(../../../serverless.common.yml):custom.resourcesStages}
+    resourceStage: ${file(../../../serverless.common.yml):custom.resourcesStage}
+    stage: ${file(../../../serverless.common.yml):custom.stage}
+    baseApiPath: ${file(../../../serverless.common.yml):custom.baseApiPath}
+    alias: ${file(../../../serverless.common.yml):custom.alias}
+    saturnEntityPath: ${self:custom.baseApiPath}/saturn
+
+    bundle:
+        forceExclude:
+            - datman-helpers
+            - datman-models
+        linting: false #Ignore for compilation
+        ignorePackages:
+            - pg-hstore
+            # only on aws
+            - ../../../layers/helper_lib/src
+            - ../../../layers/models_lib/src
+            - ../../../../layers/helper_lib/src
+            - ../../../../layers/models_lib/src
+
+functions:
+    - ${file(functions.yml)}
+resources:
+    # API Gateway Errors
+    - ${file(api-gateway-errors.yml)}

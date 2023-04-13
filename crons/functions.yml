@@ -1,0 +1,223 @@
+GenerateBatchPublish:
+    handler: functions/generate-batch/generate-batch-publisher.generateBatchPublisher
+    timeout: 900
+    # events:
+    #     - http:
+    #           path: ${self:custom.cronsEntityPath}/generate-batch
+    #           method: get
+    #           cors: true
+    environment:
+        QUEUE_URL:
+            'Fn::ImportValue': GenerateBatchQueueFifoUrl-${self:custom.alias}
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+GenerateBatchDLQ:
+    handler: functions/generate-batch/generate-batch-dlq.main
+    events:
+        - sqs:
+              arn:
+                  'Fn::ImportValue': GenerateBatchQueueFifoDLQArn-${self:custom.alias}
+              batchSize: 1
+GenerateBatchConsumerFifo:
+    handler: functions/generate-batch/generate-batch-consumer.main
+    events:
+        - sqs:
+              arn:
+                  'Fn::ImportValue': GenerateBatchQueueFifoArn-${self:custom.alias}
+              batchSize: 1 # default 10 and maximum 10
+    environment:
+        QUEUE_URL:
+            'Fn::ImportValue': GenerateBatchQueueFifoUrl-${self:custom.alias}
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+SendCsvUKPublish:
+    handler: functions/send-csv/send-csv-uk-publisher.sendCsvUK
+    timeout: 900
+    # events:
+    #     - schedule:
+    #           rate: cron(0 2 ? * 2 *)
+    #           enabled: ${self:custom.cronenabled}
+    #     - http:
+    #           path: send-csv
+    #           method: get
+    #           cors: true
+    environment:
+        QUEUE_URL:
+            'Fn::ImportValue': SendCSVUKQueueFifoUrl-${self:custom.alias}
+        LOCAL_QUEUE_URL: http://localhost:9324/queue/SendCSVfifoQueue
+        EMAIL_QUEUE_URL:
+            'Fn::ImportValue': SendEmailQueueFifoUrl-${self:custom.alias}
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+
+SendCsvUKConsumer:
+    handler: functions/send-csv/send-csv-uk-cron.main
+    events:
+        - sqs:
+              arn:
+                  'Fn::ImportValue': SendCSVUKQueueFifoArn-${self:custom.alias}
+              batchSize: 1
+    environment:
+        QUEUE_URL:
+            'Fn::ImportValue': SendCSVUKQueueFifoUrl-${self:custom.alias}
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+SendCsvUKDLQ:
+    handler: functions/send-csv/send-csv-uk-dlq.main
+    events:
+        - sqs:
+              arn:
+                  'Fn::ImportValue': SendCSVUKQueueFifoDLQArn-${self:custom.alias}
+              batchSize: 1
+SendCsvIrelandPublish:
+    # enabled: false # ${self:custom.cronenabled}
+    handler: functions/send-csv-ireland/send-csv-ireland-publisher.sendCsvIreland
+    timeout: 900
+    # events:
+    #     - schedule:
+    #           rate: cron(0 2 ? * 2 *)
+    #           enabled: ${self:custom.cronenabled}
+    #     - http:
+    #           path: send-csv-ireland
+    #           # path: ${self:custom.messagingEntityPath}/ses/list-template
+    #           method: get
+    #           cors: true
+    environment:
+        QUEUE_URL:
+            'Fn::ImportValue': SendCSVIrelandQueueFifoUrl-${self:custom.alias}
+        LOCAL_QUEUE_URL: http://localhost:9324/queue/SendCSVfifoQueue
+        EMAIL_QUEUE_URL:
+            'Fn::ImportValue': SendEmailQueueFifoUrl-${self:custom.alias}
+
+SendCsvIrelandConsumer:
+    handler: functions/send-csv-ireland/send-csv-ireland-cron.main
+    events:
+        - sqs:
+              arn:
+                  'Fn::ImportValue': SendCSVIrelandQueueFifoArn-${self:custom.alias}
+              batchSize: 1
+    environment:
+        QUEUE_URL:
+            'Fn::ImportValue': SendCSVIrelandQueueFifoUrl-${self:custom.alias}
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+SendCsvIrelandDLQ:
+    handler: functions/send-csv-ireland/send-csv-ireland-dlq.main
+    events:
+        - sqs:
+              arn:
+                  'Fn::ImportValue': SendCSVIrelandQueueFifoDLQArn-${self:custom.alias}
+              batchSize: 1
+InternalTransferPublish:
+    handler: functions/internal-transfer-complete/internal-transfer-complete-publisher.internalTransferPublisher
+    timeout: 900
+    # events:
+    #     - schedule:
+    #           rate: cron(0 2 ? * 2 *)
+    #           enabled: ${self:custom.cronenabled}
+    #     - http:
+    #           path: internalTransfer
+    #           method: get
+    #           cors: true
+    environment:
+        QUEUE_URL:
+            'Fn::ImportValue': InternalTransferCompleteQueueFifoUrl-${self:custom.alias}
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+InternalTransferDLQ:
+    handler: functions/internal-transfer-complete/internal-transfer-dlq.main
+    events:
+        - sqs:
+              arn:
+                  'Fn::ImportValue': InternalTransferCompleteQueueFifoDLQArn-${self:custom.alias}
+              batchSize:
+InternalTransferConsumerFifo:
+    handler: functions/internal-transfer-complete/internal-transfer-consumer.main
+    events:
+        - sqs:
+              arn:
+                  'Fn::ImportValue': InternalTransferCompleteQueueFifoArn-${self:custom.alias}
+              batchSize: 1 # default 10 and maximum 10
+    environment:
+        QUEUE_URL:
+            'Fn::ImportValue': InternalTransferCompleteQueueFifoUrl-${self:custom.alias}
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+InvoiceGeneratorPublish:
+    handler: functions/invoice-generator/invoice-generator-publisher.invoiceGeneratorPublisher
+    timeout: 900
+    # events:
+    #     - schedule:
+    #           rate: cron(0 2 ? * 2 *)
+    #           enabled: ${self:custom.cronenabled}
+    #     - http:
+    #           path: invoice-generator
+    #           method: get
+    #           cors: true
+    environment:
+        QUEUE_URL:
+            'Fn::ImportValue': InvoiceGeneratorQueueFifoUrl-${self:custom.alias}
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+InvoiceGeneratorDLQ:
+    handler: functions/invoice-generator/invoice-generator-dlq.main
+    events:
+        - sqs:
+              arn:
+                  'Fn::ImportValue': InvoiceGeneratorQueueFifoDLQArn-${self:custom.alias}
+              batchSize: 10
+InvoiceGeneratorConsumerFifo:
+    handler: functions/invoice-generator/invoice-generator-consumer.main
+    events:
+        - sqs:
+              arn:
+                  'Fn::ImportValue': InvoiceGeneratorQueueFifoArn-${self:custom.alias}
+              batchSize: 1 # default 10 and maximum 10
+    environment:
+        QUEUE_URL:
+            'Fn::ImportValue': InvoiceGeneratorQueueFifoUrl-${self:custom.alias}
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+
+BalanceReportGeneratorPublisher:
+    handler: functions/balance-report-generator/publisher.BalanceReportGeneratorPublisher
+    timeout: 900
+    # events:
+    #     - schedule:
+    #           rate: cron(0 3 1 * ? *)
+    #           enabled: ${self:custom.cronenabled}
+    #     - http:
+    #           path: ${self:custom.cronsEntityPath}/crons/balance-report-generator-publisher
+    #           method: post
+    environment:
+        QUEUE_URL:
+            'Fn::ImportValue': BalanceReportGeneratorQueueUrl-${self:custom.alias}
+        LOCAL_QUEUE_URL: http://localhost:9324/queue/BalanceReportGeneratorQueue
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+BalanceReportGeneratorConsumer:
+    handler: functions/balance-report-generator/consumer.BalanceReportGeneratorConsumer
+    events:
+        - sqs:
+              arn:
+                  'Fn::ImportValue': BalanceReportGeneratorQueueArn-${self:custom.alias}
+              batchSize: 10 # default 10 and maximum 10
+        # - http:
+        #       path: ${self:custom.cronsEntityPath}/crons/balance-report-generator-consumer
+        #       method: post
+    environment:
+        QUEUE_URL:
+            'Fn::ImportValue': BalanceReportGeneratorQueueUrl-${self:custom.alias}
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}

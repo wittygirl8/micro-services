@@ -1,0 +1,60 @@
+CouponSale:
+    handler: functions/coupon-sale-handler.CouponSale
+    events:
+        - http:
+              path: ${self:custom.walletVoucherEntityPath}/coupon/sale
+              method: post
+              cors: true
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+CouponRefund:
+    handler: functions/coupon-refund-handler.CouponRefund
+    events:
+        - http:
+              path: ${self:custom.walletVoucherEntityPath}/coupon/refund
+              method: post
+              cors: true
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+WalletSale:
+    handler: functions/wallet-sale-handler.WalletSale
+    events:
+        - http:
+              path: ${self:custom.walletVoucherEntityPath}/wallet/sale
+              method: post
+              cors: true
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+WalletBalance:
+    handler: functions/wallet-balance-handler.WalletBalance
+    events:
+        - http:
+              path: ${self:custom.walletVoucherEntityPath}/wallet/balance
+              method: post
+              cors: true
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+WalletHistory:
+    handler: functions/wallet-history-handler.WalletHistory
+    events:
+        - http:
+              path: ${self:custom.walletVoucherEntityPath}/wallet/history
+              method: post
+              cors: true
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+ReferralWalletBonus:
+    handler: functions/referral_wallet_bonus.main
+    events:
+        - http:
+              path: ${self:custom.walletVoucherEntityPath}/wallet/bonus
+              method: post
+              cors: true
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}

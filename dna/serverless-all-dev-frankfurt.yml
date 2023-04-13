@@ -1,0 +1,84 @@
+service: datman-dna
+
+plugins:
+    - serverless-bundle
+    - serverless-aws-alias
+
+provider:
+    name: aws
+    runtime: nodejs12.x
+    region: eu-central-1
+    timeout: 30
+    tracing:
+        apiGateway: true
+        lambda: true
+    aliasStage:
+        loggingLevel: 'ERROR'
+        dataTraceEnabled: true
+    vpc:
+        securityGroupIds:
+            - sg-073a508b7b1c42370
+        subnetIds:
+            - subnet-0e2c18bfa9ce75d20
+            - subnet-00053a95b2f4f8287
+            - subnet-0dbf2ccd2e554e05c
+    environment:
+        STAGE: ${self:custom.stage}
+        ALIAS: ${self:custom.alias}
+        DB_HOST: ${file(../../resources/credentials/db.yml):db-host-${self:custom.alias}}
+        DB_DATABASE: ${file(../../resources/credentials/db.yml):db-database-${self:custom.alias}}
+        DB_USERNAME: ${file(../../resources/credentials/db.yml):db-username-${self:custom.alias}}
+        DB_PASSWORD: ${file(../../resources/credentials/db.yml):db-password-${self:custom.alias}}
+        DNA_ENDPOINT: ${file(../../resources/credentials/domains.yml):dna-endpoint-${self:custom.alias}}
+        DNA_AUTH_API_URL: https://oauth.dnapayments.com
+        DNA_API_URL: https://api.dnapayments.com
+        MX_PAYLOAD_ENCRYPTION_KEY: ${file(../../resources/credentials/tokenisation.yml):mx-payload-encryption-key-${self:custom.alias}}
+        DNA_CLIENT_ID: ${file(../../resources/credentials/dna.yml):dna-client-id}
+        DNA_CLIENT_SECRET: ${file(../../resources/credentials/dna.yml):dna-client-secret}
+        BIFROST_API_ENDPOINT: ${file(../../resources/credentials/domains.yml):BIFROST_API_ENDPOINT}
+        BIFROST_API_TOKEN: ${file(../../resources/credentials/api-tokens.yml):BIFROST_API_TOKEN}
+        PDQ_SERVICE: ${ssm:/dev/pdq-service/apiAuthToken}
+        DNA_HOSTED_FORM: ${ssm:/dev/dna/hosted_form}
+
+    iamRoleStatements:
+        - Effect: Allow
+          Action:
+              - rds-db:connect
+          Resource: 'arn:aws:rds:eu-west-1:584634042267:db-proxy:prx-0fabf58edf359f91e/*'
+        - Effect: Allow
+          Action:
+              - rds-db:connect
+          Resource: 'arn:aws:rds-db:us-east-1:192389957878:dbuser:prx-0c3c9e48938e1674f/*'
+        - Effect: Allow
+          Action:
+              - sqs:listQueues
+              - sqs:sendMessage
+          Resource: '*'
+
+custom:
+    defaultStage: ${file(../../../serverless.common.yml):custom.defaultStage}
+    resourcesStages: ${file(../../../serverless.common.yml):custom.resourcesStages}
+    resourceStage: ${file(../../../serverless.common.yml):custom.resourcesStage}
+    stage: ${file(../../../serverless.common.yml):custom.stage}
+    baseApiPath: ${file(../../../serverless.common.yml):custom.baseApiPath}
+    alias: ${file(../../../serverless.common.yml):custom.alias}
+    dnaEntityPath: ${self:custom.baseApiPath}
+
+    bundle:
+        forceExclude:
+            - datman-helpers
+            - datman-models
+        linting: false #Ignore for compilation
+        ignorePackages:
+            - pg-hstore
+            # only on aws
+            - ../../../layers/helper_lib/src
+            - ../../../layers/models_lib/src
+            - ../../../../layers/helper_lib/src
+            - ../../../../layers/models_lib/src
+
+functions:
+    - ${file(functions.yml)}
+resources:
+    # API Gateway Errors
+    - ${file(api-gateway-errors.yml)}

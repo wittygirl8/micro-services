@@ -1,0 +1,75 @@
+stripePay:
+    handler: functions/stripe-pay-handler.stripePay
+    tracing: Active # enable tracing
+    events:
+        - http:
+              path: ${self:custom.saturnEntityPath}/stripe-pay
+              method: get
+              cors: true
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+stripePaymentStatus:
+    # role: LambdaExecutionRole
+    handler: functions/stripe-payment-status-handler.stripePaymentStatus
+    tracing: Active # enable tracing
+    events:
+        - http:
+              path: ${self:custom.saturnEntityPath}/stripe-pay-status
+              method: post
+              cors: true
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+stripeFailure:
+    handler: functions/stripe-failure-handler.stripeFailure
+    events:
+        - http:
+              path: ${self:custom.saturnEntityPath}/sp-datman-failure
+              method: get
+              cors: true
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+stripeRedirection:
+    handler: functions/stripe-redirection-handler.redirect
+    tracing: Active # enable tracing
+    events:
+        - http:
+              path: ${self:custom.saturnEntityPath}/sp-datman-redirect
+              method: get
+              cors: true
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+newClientSignedUp:
+    handler: functions/stripe-new-client-handler.newClientSignedUp
+    events:
+        - http:
+              path: ${self:custom.saturnEntityPath}/sp-datman-newclientsignup
+              method: get
+              cors: true
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+createCustomerAccount:
+    handler: functions/create-customer-account-handler.createCustomerAccount
+    events:
+        - http:
+              path: ${self:custom.saturnEntityPath}/sp-createcustomeraccount
+              method: post
+              cors: true
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+StripeRefund:
+    handler: functions/stripe-refund-handler.stripeRefund
+    tracing: Active # enable tracing
+    events:
+        - http:
+              path: ${self:custom.saturnEntityPath}/stripe-refund
+              method: post
+              cors: true
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}

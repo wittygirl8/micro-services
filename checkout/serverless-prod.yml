@@ -1,0 +1,75 @@
+service: datman-checkout-b
+
+plugins:
+    - serverless-bundle
+    # - serverless-aws-alias
+
+provider:
+    name: aws
+    runtime: nodejs12.x
+    region: eu-west-1
+    timeout: 30
+    tracing:
+        apiGateway: true
+        lambda: true
+    # aliasStage:
+    #     loggingLevel: 'ERROR'
+    #     dataTraceEnabled: true
+    vpc:
+        securityGroupIds:
+            - ${opt:SECURITY_GROUP_ID,'sg-096f90a130ecc3b3b'}
+        subnetIds:
+            - ${opt:SUBNET_A,'subnet-0473ef53ddb4c55de'}
+            - ${opt:SUBNET_B,'subnet-0ad4247942baa5f8c'}
+    environment:
+        STAGE: ${self:custom.stage}
+        ALIAS: ${self:custom.alias}
+        OPTOMANY_CREDS: ${ssm:/prod/optomany_creds}
+        T2S_CREDS: ${ssm:/prod/t2s_creds}
+        CHECKOUT: ${ssm:/prod/checkout}
+        DB_HOST: ${file(../../resources/credentials/db.yml):db-host-${self:custom.alias}}
+        DB_DATABASE: ${file(../../resources/credentials/db.yml):db-database-${self:custom.alias}}
+        DB_USERNAME: ${file(../../resources/credentials/db.yml):db-username-${self:custom.alias}}
+        DB_PASSWORD: ${file(../../resources/credentials/db.yml):db-password-${self:custom.alias}}
+        URL_SHORTNER_API_BASEURL: https://li30sbvlwj.execute-api.eu-west-1.amazonaws.com/pre-prod
+        MX_PAYLOAD_ENCRYPTION_KEY: ${file(../../resources/credentials/tokenisation.yml):mx-payload-encryption-key-${self:custom.alias}}
+        T2S_API_AUTHORIZE_TOKEN: ${file(../../resources/credentials/api-tokens.yml):t2s-api-authorize-token-${self:custom.alias}}
+        OPTOMANY_PAYLOAD_ENCRYPTION_KEY: ${file(../../resources/credentials/switich-encryption.yml):optomany-payload-encryption-key-${self:custom.alias}}
+
+    iamRoleStatements:
+        - Effect: Allow
+          Action:
+              - rds-db:connect
+          Resource: 'arn:aws:rds-db:eu-west-1:584634042267:dbuser:prx-06455dd61dfe7f3e0/*'
+        - Effect: Allow
+          Action:
+              - sqs:sendMessage
+          Resource: '*'
+
+custom:
+    defaultStage: ${file(../../../serverless.common.yml):custom.defaultStage}
+    resourcesStages: ${file(../../../serverless.common.yml):custom.resourcesStages}
+    resourceStage: ${file(../../../serverless.common.yml):custom.resourcesStage}
+    stage: ${file(../../../serverless.common.yml):custom.stage}
+    baseApiPath: ${file(../../../serverless.common.yml):custom.baseApiPath}
+    alias: ${file(../../../serverless.common.yml):custom.alias}
+    environmentName: ${opt:ENVIRONMENT_NAME,'cp'}
+    serviceName: ${opt:SERVICE_NAME,'datman-checkout'}
+
+    bundle:
+        forceExclude:
+            - datman-helpers
+            - datman-models
+        linting: false #Ignore for compilation
+        ignorePackages:
+            - pg-hstore
+            # only on aws
+            - ../../../layers/helper_lib/src
+            - ../../../layers/models_lib/src
+            - ../../../../layers/helper_lib/src
+            - ../../../../layers/models_lib/src
+
+functions:
+    - ${file(functions_v1.yml)}
+resources:
+    - ${file(api-gateway-errors.yml)}

@@ -1,0 +1,83 @@
+service: messaging-consumers
+
+plugins:
+    - serverless-offline
+    - serverless-offline-sns
+    - serverless-offline-sqs
+    - serverless-bundle
+
+provider:
+    name: aws
+    runtime: nodejs12.x
+    region: eu-west-1
+    timeout: 30
+    environment:
+        T2S_API_TOKEN: 'laksjdflkasjdfaksdflasd'
+        OPTOMANY_PAYLOAD_ENCRYPTION_KEY: 'pSk0qDEIQxh6PjgSSheg0nYgE00ezwkj'
+        SIMULATOR_SUCCESS: 'success@simulator.amazonses.com' #Override emails for non production. Before changing check with Lead or Devops
+        URANUS_USERNAME: 'ws@Company.DatMan'
+        URANUS_PASSWORD: '?(zb*t*Mb3sb$2AVzdYMkkF:2'
+        JUPITOR_API_ENDPOINT: 'https://api-sandbox.judopay.com'
+        JUPITOR_USERNAME: 'UAHOuPrK3AFW7lM5'
+        JUPITOR_PASSWORD: 'f88a22c87603ca46f784f30547a7e8db2842bde9bc8d4404db3ec49ab6c5bff3'
+        URANUS_API_ENDPOINT: 'https://pal-test.barclaycardsmartpay.com'
+        JUPITOR_JUDO_ID: '100177-237'
+        MERCHANT_SIGNATURE_KEY_ID: 1
+        FH_SIGNATURE: 'BA07FA4B-0168-4584-BE08-63BFD97BD410'
+        FH_MERCHANT_STORE_ID: 71040
+        FH_MERCHANT_DEPARTMENT_ID: 116072
+        T2S_SIGNATURE: '28FD604F-B953-4498-9FE7-D2BC39BB797C'
+        T2S_MERCHANT_STORE_ID: 71176
+        T2S_MERCHANT_DEPARTMENT_ID: 116094
+        SIGNATURE_TYPE: 'Hmac256'
+        SAGE_PAY_REFUND_URL: 'https://test.sagepay.com/gateway/service/refund.vsp'
+        EARTH_API_ENDPOINT: http://localhost:4002/dev/api/v1
+        PUSH_NOTIFICATION_ENDPOINTS: ${ssm:/cp/${self:custom.stage}/cp/PushNotificationEndpoint}
+        PUSH_NOTIFICATION_ENDPOINTS_API_KEY: ${ssm:/cp/${self:custom.stage}/cp/PushNotificationEndpointsApiKey}
+        BANK_TOKENIZATION_API_KEY: ${ssm:/gateway/${self:custom.stage}/gateway/BankTokenizationAPIKey~true}
+        PIN_PAYMENT_BASE_URL: ${ssm:/gateway/${self:custom.stage}/gateway/PinPaymentBaseUrl}
+        PIN_PAYMENT_API_KEY: ${ssm:/gateway/${self:custom.stage}/gateway/PinPaymentAPIKey~true}
+
+    iamRoleStatements:
+        - Effect: Allow
+          Action:
+              - sqs:*
+              - ssm:GetParameters
+          Resource: '*'
+
+custom:
+    defaultStage: ${file(../../../serverless.common.yml):custom.defaultStage}
+    stage: ${file(../../../serverless.common.yml):custom.stage}
+    baseApiPath: ${file(../../../serverless.common.yml):custom.baseApiPath}
+    alias: ${file(../../../serverless.common.yml):custom.alias}
+    messagingEntityPath: ${self:custom.baseApiPath}/messaging
+    #Locally
+    serverless-offline:
+        httpPort: 4007
+        lambdaPort: 5007
+        printOutput: true
+    serverless-offline-sqs:
+        apiVersion: '2012-11-05'
+        endpoint: 'http://0.0.0.0:9324'
+        region: eu-west-1
+        accessKeyId: local
+        secretAccessKey: local
+
+    bundle:
+        forceExclude:
+            - datman-helpers
+            - datman-models
+        linting: false #Ignore for compilation
+        ignorePackages:
+            - pg-hstore
+
+    cronoptions:
+        prod: false
+        dev: true
+        pre-prod: false
+        cp-e2e: true
+        stage: true
+        other: false
+    cronenabled: ${self:custom.cronoptions.${self:custom.stage}, self:custom.cronoptions.other}
+functions:
+    - ${file(functions.yml)}

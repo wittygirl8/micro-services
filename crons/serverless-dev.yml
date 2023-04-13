@@ -1,0 +1,61 @@
+service: datman-crons
+
+plugins:
+    - serverless-bundle
+
+provider:
+    name: aws
+    runtime: nodejs12.x
+    region: eu-west-1
+    timeout: 30
+    vpc:
+        securityGroupIds:
+            - sg-096f90a130ecc3b3b
+        subnetIds:
+            - subnet-0473ef53ddb4c55de
+            - subnet-0ad4247942baa5f8c
+    environment:
+        STAGE: ${self:custom.stage}
+        ALIAS: ${self:custom.alias}
+        T2S_API_TOKEN: ${file(../../resources/credentials/api-tokens.yml):t2s-api-token-${self:custom.alias}}
+        DB_HOST: ${file(../../resources/credentials/db.yml):db-host-${self:custom.alias}}
+        DB_DATABASE: ${file(../../resources/credentials/db.yml):db-database-${self:custom.alias}}
+        DB_USERNAME: ${file(../../resources/credentials/db.yml):db-username-${self:custom.alias}}
+        DB_PASSWORD: ${file(../../resources/credentials/db.yml):db-password-${self:custom.alias}}
+        S3_BUCKET_CRED: ${file(../../resources/credentials/s3_cred.yml):s3-bucket-cred-${self:custom.alias}}
+    iamRoleStatements:
+        - Effect: Allow
+          Action:
+              - sqs:*
+              - ses:*
+              - sns:*
+          Resource: '*'
+
+custom:
+    defaultStage: ${file(../../../serverless.common.yml):custom.defaultStage}
+    stage: ${file(../../../serverless.common.yml):custom.stage}
+    baseApiPath: ${file(../../../serverless.common.yml):custom.baseApiPath}
+    alias: ${file(../../../serverless.common.yml):custom.alias}
+    cronsEntityPath: ${self:custom.baseApiPath}/crons
+    cronoptions:
+        prod: false
+        dev: true
+        pre-prod: false
+        cp-e2e: true
+        stage: true
+        other: false
+    cronenabled: ${self:custom.cronoptions.${self:custom.stage}, self:custom.cronoptions.other}
+
+    bundle:
+        forceExclude:
+            - datman-helpers
+            - datman-models
+        linting: false #Ignore for compilation
+        ignorePackages:
+            - pg-hstore
+            # only on aws.
+            - ../../layers/helper_lib/src
+            - ../../layers/models_lib/src
+
+functions:
+    - ${file(functions.yml)}

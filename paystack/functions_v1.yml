@@ -1,0 +1,104 @@
+CreateSalePaystack_v1:
+    handler: functions/hosted-form-handler.main
+    tracing: Active # enable tracing
+    runtime: nodejs12.x
+    events:
+        - http:
+              path: api/v1/sale/hosted-form
+              method: get
+              cors: true
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+
+RedirectVerifyPaystack_v1:
+    handler: functions/redirect-verify-handler.main
+    tracing: Active # enable tracing
+    runtime: nodejs12.x
+    events:
+        - http:
+              path: api/v1/sale/verify
+              method: get
+              cors: true
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+
+WebhookPaystack_v1:
+    handler: functions/webhook-handler.main
+    tracing: Active # enable tracing
+    runtime: nodejs12.x
+    events:
+        - http:
+              path: api/v1/webhook
+              method: post
+              cors: true
+    environment:
+        NOTIFY_ORDER_STATUS_QUEUE_URL:
+            'Fn::ImportValue': NotifyOrderStatusQueueUrl-${self:custom.alias}
+        NOTIFY_ORDER_STATUS_QUEUE_URL_LOCAL: https://sqs.eu-west-1.amazonaws.com/584634042267/NotifyOrderStatusQueue-hotfix
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+
+RefundPaystack_v1:
+    handler: functions/refund-handler.main
+    tracing: Active # enable tracing
+    runtime: nodejs12.x
+    events:
+        - http:
+              path: api/v1/refund
+              method: post
+              cors: true
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+
+XpressSalePaystack_v1:
+    handler: functions/xpress-sale-handler.main
+    tracing: Active # enable tracing
+    runtime: nodejs12.x
+    events:
+        - http:
+              path: api/v1/xpress-checkout
+              method: post
+              cors: true
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+
+CronJobCreateBatchPaystack_v1:
+    handler: functions/cronjob-payouts-create-batch.main
+    timeout: 900
+    runtime: nodejs12.x
+    events:
+        - http:
+              path: api/v1/cronjob/payouts/create-batch
+              method: post #keeping it post so that it wont be initiated from browser by accident
+              cors: true
+        # - schedule: cron(0 5 ? * 2-6 *)
+        # - http:
+        #       path: process/batch
+        #       method: get
+        #       cors: true
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+
+CronJobProcessBatchPaystack_v1:
+    handler: functions/cronjob-payouts-process-batch.main
+    timeout: 900
+    runtime: nodejs12.x
+    events:
+        - http:
+              path: api/v1/cronjob/payouts/process-batch
+              method: post #keeping it post so that it wont be initiated from browser by accident
+              cors: true
+        # - schedule: cron(0 5 ? * 2-6 *)
+        # - http:
+        #       path: process/batch
+        #       method: get
+        #       cors: true
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}

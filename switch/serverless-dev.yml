@@ -1,0 +1,80 @@
+service: datman-switch
+
+plugins:
+    - serverless-bundle
+    - serverless-aws-alias
+
+provider:
+    name: aws
+    runtime: nodejs12.x
+    region: eu-west-1
+    timeout: 30
+    aliasStage:
+        loggingLevel: 'ERROR'
+        dataTraceEnabled: true
+    vpc:
+        securityGroupIds:
+            - sg-096f90a130ecc3b3b
+        subnetIds:
+            - subnet-0473ef53ddb4c55de
+            - subnet-0ad4247942baa5f8c
+    environment:
+        STAGE: ${self:custom.stage}
+        ALIAS: ${self:custom.alias}
+
+        DB_HOST: ${file(../../resources/credentials/db.yml):db-host-${self:custom.alias}}
+        DB_DATABASE: ${file(../../resources/credentials/db.yml):db-database-${self:custom.alias}}
+        DB_USERNAME: ${file(../../resources/credentials/db.yml):db-username-${self:custom.alias}}
+        DB_PASSWORD: ${file(../../resources/credentials/db.yml):db-password-${self:custom.alias}}
+        SWITCH_PAYLOD_ENCRYPTION_KEY: ${file(../../resources/credentials/switich-encryption.yml):switch-paylod-encryption-key-${self:custom.alias}}
+        OPTOMANY_PAYLOAD_ENCRYPTION_KEY: ${file(../../resources/credentials/switich-encryption.yml):optomany-payload-encryption-key-${self:custom.alias}}
+        STRIPE_PAYLOAD_ENCRYPTION_KEY: ${file(../../resources/credentials/switich-encryption.yml):stripe-payload-encryption-key-${self:custom.alias}}
+        EARTH_PAYLOAD_ENCRYPTION_KEY: ${file(../../resources/credentials/switich-encryption.yml):earth-payload-encryption-key-${self:custom.alias}}
+        BARCLAYS_PAYLOAD_ENCRYPTION_KEY: ${file(../../resources/credentials/switich-encryption.yml):barclays-payload-encryption-key-${self:custom.alias}}
+        OPTOMANY_ENDPOINT: ${file(../../resources/credentials/domains.yml):optomany-endpoint-${self:custom.alias}}
+        STRIPE_ENDPOINT: ${file(../../resources/credentials/domains.yml):stripe-endpoint-${self:custom.alias}}
+        EARTH_ENDPOINT: ${file(../../resources/credentials/domains.yml):earth-endpoint-${self:custom.alias}}
+        BARCLAYS_ENDPOINT: ${file(../../resources/credentials/domains.yml):barclays-endpoint-${self:custom.alias}}
+        T2S_API_TOKEN: ${file(../../resources/credentials/api-tokens.yml):t2s-api-token-${self:custom.alias}}
+        T2S_API_AUTHORIZE_TOKEN: ${file(../../resources/credentials/api-tokens.yml):t2s-api-authorize-token-${self:custom.alias}}
+        ANTAR_API_BASE_URL: ${file(../../resources/credentials/adyen-credentials.yml):ANTAR_API_BASE_URL}
+        ANTAR_GFO_API_AUTHORIZE_TOKEN: ${file(../../resources/credentials/adyen-credentials.yml):ANTAR_GFO_API_AUTHORIZE_TOKEN}
+        DNA_HOSTED_FORM: ${ssm:/dev/dna/hosted_form}
+
+    iamRoleStatements:
+        - Effect: Allow
+          Action:
+              - rds-db:connect
+          Resource: 'arn:aws:rds:eu-west-1:584634042267:db-proxy:prx-0fabf58edf359f91e/*'
+        - Effect: Allow
+          Action:
+              - sqs:sendMessage
+          Resource: '*'
+
+custom:
+    defaultStage: ${file(../../../serverless.common.yml):custom.defaultStage}
+    # resourcesStages: ${file(../../../serverless.common.yml):custom.resourcesStages}
+    # resourceStage: ${file(../../../serverless.common.yml):custom.resourcesStage}
+    stage: ${file(../../../serverless.common.yml):custom.stage}
+    baseApiPath: ${file(../../../serverless.common.yml):custom.baseApiPath}
+    alias: ${file(../../../serverless.common.yml):custom.alias}
+    switchEntityPath: ${self:custom.baseApiPath}/switch
+
+    bundle:
+        forceExclude:
+            - datman-helpers
+            - datman-models
+        linting: false #Ignore for compilation
+        ignorePackages:
+            - pg-hstore
+            # only on aws
+            - ../../../layers/helper_lib/src
+            - ../../../layers/models_lib/src
+            - ../../../../layers/helper_lib/src
+            - ../../../../layers/models_lib/src
+
+functions:
+    - ${file(functions.yml)}
+resources:
+    # API Gateway Errors
+    - ${file(api-gateway-errors-dev.yml)}

@@ -1,0 +1,35 @@
+Resources:
+    GatewayResponseDefault4XX:
+        Type: 'AWS::ApiGateway::GatewayResponse'
+        Properties:
+            ResponseParameters:
+                gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
+                gatewayresponse.header.Access-Control-Allow-Headers: "'*'"
+            ResponseType: DEFAULT_4XX
+            RestApiId:
+                Ref: 'ApiGatewayRestApi'
+    GatewayResponseDefault5XX:
+        Type: 'AWS::ApiGateway::GatewayResponse'
+        Properties:
+            ResponseParameters:
+                gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
+                gatewayresponse.header.Access-Control-Allow-Headers: "'*'"
+            ResponseType: DEFAULT_5XX
+            RestApiId:
+                Ref: 'ApiGatewayRestApi'
+    ApiBaseEnpoint:
+        Type: AWS::SSM::Parameter
+        Properties:
+            Name: !Sub '/${self:custom.environmentName}/${self:custom.alias}/${self:custom.serviceName}/CheckoutApiBaseEndpoint'
+            Type: String
+            Value: !Join
+                - ''
+                - - 'https://'
+                  - !Ref ApiGatewayRestApi
+                  - '.execute-api.'
+                  - ${opt:region, self:provider.region}
+                  - '.amazonaws.com/'
+                  - ${self:custom.alias}
+                  - '/'
+                  - 'api'
+            Description: !Sub 'Base API Gateway endpoint for ${self:custom.serviceName} in tier {self:custom.alias} for ${self:custom.environmentName} environment '

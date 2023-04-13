@@ -1,0 +1,95 @@
+createSaleCheckout_v1:
+    handler: functions/hosted-form-handler.handler
+    tracing: Active # enable tracing
+    runtime: nodejs12.x
+    events:
+        - http:
+              path: api/v1/sale/hosted
+              method: get
+              cors: true
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+
+webhookCheckout_v1:
+    handler: functions/webhook-retrieval-handler.handler
+    tracing: Active # enable tracing
+    runtime: nodejs12.x
+    events:
+        - http:
+              path: api/v1/webhook
+              method: post
+              cors: true
+    environment:
+        QUEUE_URL:
+            'Fn::ImportValue': NotifyOrderStatusQueueUrl-${self:custom.alias}
+        LOCAL_QUEUE_URL: http://localhost:9324/queue/queueFifo.fifo
+        QUEUE_URL_MASTERTOKEN_V2:
+            'Fn::ImportValue': MasterTokenV2QueueUrl-${self:custom.alias}
+        LOCAL_QUEUE_URL_MASTERTOKEN_V2: http://localhost:9324/queue/queueFifo
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+
+refund_v1:
+    handler: functions/refund-handler.handler
+    tracing: Active # enable tracing
+    runtime: nodejs12.x
+    events:
+        - http:
+              path: api/v1/refund
+              method: post
+              cors: true
+    environment:
+        QUEUE_URL:
+            'Fn::ImportValue': NotifyOrderStatusQueueUrl-${self:custom.alias}
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+
+shorturl_v1:
+    handler: functions/short-url-handler.handler
+    tracing: Active # enable tracing
+    runtime: nodejs12.x
+    events:
+        - http:
+              path: api/v1/shorturl
+              method: post
+              cors: true
+        - http:
+              path: api/v1/shorturl/{short_id}
+              method: get
+              cors: true
+        - http:
+              path: api/v1/shorturl/redirect/{short_id}
+              method: get
+              cors: true
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+
+Checkout_tokens:
+    handler: functions/wallet-tokens-handler.handler
+    tracing: Active # enable tracing
+    runtime: nodejs12.x
+    events:
+        - http:
+              path: api/v1/token-pay
+              method: post
+              cors: true
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+
+CheckoutExpressPay_v1:
+    handler: functions/express-pay-handler.handler
+    tracing: Active # enable tracing
+    runtime: nodejs12.x
+    events:
+        - http:
+              path: api/v1/express-pay
+              method: post
+              cors: true
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}

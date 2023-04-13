@@ -1,0 +1,336 @@
+SQSSenderFifo:
+    handler: functions/sqs-fifo-test/sqs-sender.main
+    events:
+        - http:
+              path: send/fifo
+              method: post
+    environment:
+        QUEUE_URL:
+            'Fn::ImportValue': QueueFifoUrl-${self:custom.alias}
+SQSConsumerFifo:
+    handler: functions/sqs-fifo-test/sqs-consumer.main
+    events:
+        - sqs:
+              arn:
+                  'Fn::ImportValue': QueueFifoArn-${self:custom.alias}
+              batchSize: 10 # default 10 and maximum 10
+    environment:
+        QUEUE_URL:
+            'Fn::ImportValue': QueueFifoUrl-${self:custom.alias}
+SQSFifoDLQ:
+    handler: functions/sqs-fifo-test/readDLQ.main
+    events:
+        - sqs:
+              arn:
+                  'Fn::ImportValue': QueueFifoDLQArn-${self:custom.alias}
+              batchSize: 1
+#This is legacy fifo queue and should be deleted later
+NotifyT2SConsumerFifo:
+    handler: functions/notify-t2s/notify-t2s-consumer.main
+    events:
+        - sqs:
+              arn:
+                  'Fn::ImportValue': NotifyT2SQueueFifoArn-${self:custom.alias}
+              batchSize: 10 # default 10 and maximum 10
+    environment:
+        QUEUE_URL:
+            'Fn::ImportValue': NotifyT2SQueueFifoUrl-${self:custom.alias}
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+#This is legacy fifo queue and should be deleted later
+NotifyT2SFifoDLQ:
+    handler: functions/notify-t2s/notify-t2s-dlq.main
+    events:
+        - sqs:
+              arn:
+                  'Fn::ImportValue': NotifyT2SQueueFifoDLQArn-${self:custom.alias}
+              batchSize: 1
+
+NotifyOrderStatusConsumer:
+    handler: functions/notify-t2s/notify-t2s-consumer.main
+    events:
+        - sqs:
+              arn:
+                  'Fn::ImportValue': NotifyOrderStatusQueueArn-${self:custom.alias}
+              batchSize: 10 # default 10 and maximum 10
+    environment:
+        QUEUE_URL:
+            'Fn::ImportValue': NotifyOrderStatusQueueUrl-${self:custom.alias}
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+
+NotifyOrderStatusDLQ:
+    handler: functions/notify-t2s/notify-t2s-dlq.main
+    events:
+        - sqs:
+              arn:
+                  'Fn::ImportValue': NotifyOrderStatusQueueDLQArn-${self:custom.alias}
+              batchSize: 1
+sendEmailHandler:
+    handler: functions/send-email/send-sesEmail-handler.sendMail
+    events:
+        - http:
+              path: ${self:custom.messagingEntityPath}/ses/send-mail
+              method: post
+              cors: true
+    environment:
+        QUEUE_URL:
+            'Fn::ImportValue': SendEmailQueueFifoUrl-${self:custom.alias}
+        LOCAL_QUEUE_URL: http://localhost:9324/queue/queueFifo.fifo
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+SendEmailConsumerFifo:
+    handler: functions/send-email/send-email-consumer.main
+    events:
+        - sqs:
+              arn:
+                  'Fn::ImportValue': SendEmailQueueFifoArn-${self:custom.alias}
+              batchSize: 10 # default 10 and maximum 10
+    environment:
+        QUEUE_URL:
+            'Fn::ImportValue': SendEmailQueueFifoUrl-${self:custom.alias}
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+
+PushNotificationConsumerFifo:
+    handler: functions/send-push-notification/send-push-notification-consumer.main
+    timeout: 150
+    events:
+        - sqs:
+              arn:
+                  'Fn::ImportValue': PushNotificationQueueFifoArn-${self:custom.alias}
+              batchSize: 10 # default 10 and maximum 10
+    environment:
+        QUEUE_URL:
+            'Fn::ImportValue': PushNotificationQueueFifoUrl-${self:custom.alias}
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+
+PushNotificationFifoDLQ:
+    handler: functions/send-push-notification/send-push-notification-dlq.main
+    events:
+        - sqs:
+              arn:
+                  'Fn::ImportValue': PushNotificationQueueFifoDLQArn-${self:custom.alias}
+              batchSize: 1
+
+SendEmailFifoDLQ:
+    handler: functions/send-email/send-email-dlq.main
+    events:
+        - sqs:
+              arn:
+                  'Fn::ImportValue': SendEmailQueueFifoDLQArn-${self:custom.alias}
+              batchSize: 1
+
+sendSMSHandler:
+    handler: functions/send-sms/send-snsSMS-handler.sendSMS
+    events:
+        - http:
+              path: ${self:custom.messagingEntityPath}/sns/send-sms
+              method: post
+              cors: true
+    environment:
+        QUEUE_URL:
+            'Fn::ImportValue': SendSMSQueueFifoUrl-${self:custom.alias}
+        LOCAL_QUEUE_URL: http://localhost:9324/queue/queueFifo.fifo
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+SendSMSConsumerFifo:
+    handler: functions/send-sms/send-sms-consumer.main
+    events:
+        - sqs:
+              arn:
+                  'Fn::ImportValue': SendSMSQueueFifoArn-${self:custom.alias}
+              batchSize: 10 # default 10 and maximum 10
+    environment:
+        QUEUE_URL:
+            'Fn::ImportValue': SendSMSQueueFifoUrl-${self:custom.alias}
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+SendSMSFifoDLQ:
+    handler: functions/send-sms/send-sms-dlq.main
+    events:
+        - sqs:
+              arn:
+                  'Fn::ImportValue': SendSMSQueueFifoDLQArn-${self:custom.alias}
+              batchSize: 1
+
+createTemplateHandler:
+    handler: functions/send-email/createTemplate-handler.createTemplate
+    events:
+        - http:
+              path: ${self:custom.messagingEntityPath}/ses/create-template
+              method: post
+              cors: true
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+
+listTemplateHandler:
+    handler: functions/send-email/listTemplate-handler.listTemplate
+    events:
+        - http:
+              path: ${self:custom.messagingEntityPath}/ses/list-template
+              method: post
+              cors: true
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+MasterTokenConsumer:
+    handler: functions/master-token/master-token-consumer.main
+    events:
+        - sqs:
+              arn:
+                  'Fn::ImportValue': MasterTokenSQueueArn-${self:custom.alias}
+              batchSize: 10 # default 10 and maximum 10
+    environment:
+        QUEUE_URL:
+            'Fn::ImportValue': MasterTokenSQueueUrl-${self:custom.alias}
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+MasterTokenDLQ:
+    handler: functions/master-token/master-token-dlq.main
+    events:
+        - sqs:
+              arn:
+                  'Fn::ImportValue': MasterTokenSQueueDLQArn-${self:custom.alias}
+              batchSize: 1
+
+MasterTokenV2Consumer:
+    handler: functions/master-token-v2/master-token-v2-consumer.main
+    events:
+        - sqs:
+              arn:
+                  'Fn::ImportValue': MasterTokenV2QueueArn-${self:custom.alias}
+              batchSize: 10 # default 10 and maximum 10
+    environment:
+        QUEUE_URL:
+            'Fn::ImportValue': MasterTokenV2QueueUrl-${self:custom.alias}
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+MasterTokenV2DLQ:
+    handler: functions/master-token-v2/master-token-v2-dlq.main
+    events:
+        - sqs:
+              arn:
+                  'Fn::ImportValue': MasterTokenV2QueueDLQArn-${self:custom.alias}
+              batchSize: 1
+
+AutoWithdrawalsPublish:
+    # enabled: false # ${self:custom.cronenabled}
+    handler: functions/auto-withdrawal/auto-withdrawal-publisher.autoWithdrawalPublisher
+    timeout: 900
+    events:
+        - schedule:
+              rate: cron(0 2 ? * 2 *)
+              enabled: ${self:custom.cronenabled}
+        # - http:
+        #       path: withdrawalcron
+        #       # path: ${self:custom.messagingEntityPath}/ses/list-template
+        #       method: get
+        #       cors: true
+    environment:
+        QUEUE_URL:
+            'Fn::ImportValue': AutoWithdrawalQueueUrl-${self:custom.alias}
+        LOCAL_QUEUE_URL: http://localhost:9324/queue/AutoWithdrawalQueue
+        EMAIL_QUEUE_URL:
+            'Fn::ImportValue': SendEmailQueueFifoUrl-${self:custom.alias}
+        SMS_QUEUE_URL:
+            'Fn::ImportValue': SendSMSQueueFifoUrl-${self:custom.alias}
+
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+
+AutoWithdrawalsConsumer:
+    handler: functions/auto-withdrawal/auto-withdrawal-cron.main
+    timeout: 900
+    reservedConcurrency: 5
+    events:
+        - sqs:
+              arn:
+                  'Fn::ImportValue': AutoWithdrawalQueueArn-${self:custom.alias}
+              batchSize: 10
+    environment:
+        QUEUE_URL:
+            'Fn::ImportValue': AutoWithdrawalQueueUrl-${self:custom.alias}
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+
+AutoWithdrawalsDLQ:
+    handler: functions/auto-withdrawal/auto-withdrawal-dlq.main
+    events:
+        - sqs:
+              arn:
+                  'Fn::ImportValue': AutoWithdrawalQueueDLQArn-${self:custom.alias}
+              batchSize: 1
+AutoWithdrawalValidation:
+    handler: functions/auto-withdrawal/auto-withdrawal-validation-cron.autoWithdrawalValidation
+    timeout: 900
+    events:
+        - schedule: cron(0 4 ? * 2 *)
+        # - http:
+        #      path: autowithdraw/validation
+        #      method: get
+        #      cors: true
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+
+RefundSaleConsumer:
+    handler: functions/refund-sale/refund-sale-consumer.main
+    reservedConcurrency: 5 #Concurrency control for nr of lambda instances
+    events:
+        - sqs:
+              arn:
+                  'Fn::ImportValue': RefundSaleQueueArn-${self:custom.alias}
+              batchSize: 10 # default 10 and maximum 10
+    environment:
+        REFUND_SALE_SQS_QUEUE_URL:
+            'Fn::ImportValue': RefundSaleQueueUrl-${self:custom.alias}
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+RefundSaleDLQ:
+    handler: functions/refund-sale/refund-sale-dlq.main
+    events:
+        - sqs:
+              arn:
+                  'Fn::ImportValue': RefundSaleQueueDLQArn-${self:custom.alias}
+              batchSize: 1
+orderReceiptHandler:
+    handler: functions/order-receipt/order-receipt-handler.orderReceipt
+    events:
+        - http:
+              path: ${self:custom.messagingEntityPath}/order-receipt
+              method: post
+              cors: true
+    environment:
+        EMAIL_QUEUE_URL:
+            'Fn::ImportValue': SendEmailQueueFifoUrl-${self:custom.alias}
+        SMS_QUEUE_URL:
+            'Fn::ImportValue': SendSMSQueueFifoUrl-${self:custom.alias}
+        LOCAL_QUEUE_URL: http://localhost:9324/queue/queueFifo.fifo
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+bankTokenization:
+    handler: functions/bank-tokenization/bank-tokenization.bankTokenization
+    events:
+        - http:
+              path: ${self:custom.messagingEntityPath}/bank-tokenization
+              method: post
+              cors: true
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}

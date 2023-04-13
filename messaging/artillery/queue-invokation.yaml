@@ -1,0 +1,10 @@
+config:
+  target: 'https://06ouk1gpg2.execute-api.eu-west-1.amazonaws.com/dev/send'
+  phases:
+    - duration: 3
+      arrivalRate: 1
+      rampTo: 1
+scenarios:
+  - flow:
+    - post:
+        url: "/fifo"

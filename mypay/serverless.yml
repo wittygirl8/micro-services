@@ -1,0 +1,77 @@
+service: datman-microservices-earth
+
+plugins:
+    - serverless-bundle
+    - serverless-aws-alias
+
+provider:
+    name: aws
+    runtime: nodejs12.x
+    region: us-east-1
+    timeout: 30
+    aliasStage:
+        loggingLevel: 'ERROR'
+        dataTraceEnabled: true
+    environment:
+        COGNITO_USER_POOL_ID: ${file(../../resources/stack-outputs/cognito-${self:custom.stage}.yml):CognitoUserPoolId}
+        COGNITO_CLIENT_ID: ${file(../../resources/stack-outputs/cognito-${self:custom.stage}.yml):CognitoUserPoolClientId}
+        STAGE: ${self:custom.stage}
+        ALIAS: ${self:custom.alias}
+        DB_RESOURCE_ARN: ${file(../../resources/stack-outputs/database-${self:custom.stage}.yml):DbClusterArn}
+        SECRET_ARN: ${file(../../resources/stack-outputs/database-${self:custom.stage}.yml):SecretManagerArn}
+        BIFROST_ENDPOINTS: ${file(../../resources/credentials/domains.yml):bifrost-api-endpoint-${self:custom.alias}}
+        BIFROST_API_TOKEN: ${file(../../resources/credentials/api-tokens.yml):bifrost-api-token-${self:custom.alias}}
+        DNA_WEBHOOK_URL: ${ssm:/dev/gateway/dna_webhook}
+        DNA_RETURN_URL: 'https://beta-portal.omni-pay.com/virtual-terminal'
+        DNA_TERMINAL_ID: '24b25f01-5182-4e4b-ac55-16ab30a6bed5'
+        DNA_CLIENT_SECRET: 't*8s=AaNQMPQYGcJpXaU3mn-u7t=vS3cek7hh2LCbQDcj2BLgngH*7jv0$Eh7bjI'
+        DNA_CLIENT_ID: 'optomany_test_integrations'
+        DNA_SCOPE: 'payment integration_embedded'
+        DNA_AUTH_URL: 'https://test-oauth.dnapayments.com/oauth2/token'
+        DNA_SDK_URL: 'https://test-pay.dnapayments.com/checkout/payment-api.js'
+        SIMULATOR_SUCCESS: 'sundaresan@datman.je'
+
+    iamRoleStatements:
+        - Effect: Allow
+          Action:
+              - rds-data:ExecuteStatement
+              - rds-data:BatchExecuteStatement
+              - rds-data:BeginTransaction
+              - rds-data:CommitTransaction
+              - rds-data:RollbackTransaction
+          Resource: '*'
+        - Effect: Allow
+          Action:
+              - secretsmanager:GetSecretValue
+          Resource:
+              'Fn::ImportValue': ${self:custom.stage}-SecretManagerArn
+
+custom:
+    defaultStage: ${file(../../../serverless.common.yml):custom.defaultStage}
+    resourcesStages: ${file(../../../serverless.common.yml):custom.resourcesStages}
+    resourceStage: ${file(../../../serverless.common.yml):custom.resourcesStage}
+    stage: ${file(../../../serverless.common.yml):custom.stage}
+    alias: ${file(../../../serverless.common.yml):custom.alias}
+    baseApiPath: ${file(../../../serverless.common.yml):custom.baseApiPath}
+    enableKeepWarm: true
+
+    mypayEntityPath: ${self:custom.baseApiPath}/mypay
+
+    bundle:
+        forceExclude:
+            - datman-helpers
+            - datman-models
+        linting: false #Ignore for compilation
+        ignorePackages:
+            - pg-hstore
+            # only on aws
+            - ../../../layers/helper_lib/src
+            - ../../../layers/models_lib/src
+            - ../../../../layers/helper_lib/src
+            - ../../../../layers/models_lib/src
+
+functions:
+    - ${file(functions.yml)}
+resources:
+    # API Gateway Errors
+    - ${file(api-gateway-errors.yml)}

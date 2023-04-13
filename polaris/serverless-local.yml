@@ -1,0 +1,73 @@
+service: datman-polaris
+
+plugins:
+    - serverless-offline
+    - serverless-bundle
+    - serverless-aws-alias
+
+provider:
+    name: aws
+    runtime: nodejs12.x
+    region: us-east-1
+    tracing:
+        apiGateway: true
+        lambda: true
+    aliasStage:
+        loggingLevel: 'ERROR'
+        dataTraceEnabled: true
+    environment:
+        STAGE: ${self:custom.stage}
+        ALIAS: ${self:custom.alias}
+        PP_END_POINT_URL: https://test-api.pinpayments.com/1/transfers
+        PP_API_KEY: VDhXc1lkeUZDTTZFczhYVVIxSmUzdzo=
+        TIPALTI_API_TOKEN: mWdCyLz2KOdpM6SdBsTPyHCAj0Fzpdf+9m5o4/dKvgKrCLFtEB3K61AFIQlBFOiA
+        TIPALTI_API_DOMAIN: https://api.sandbox.tipalti.com/v9
+        TIPALTI_ACKNOWLEDGEMENT_API_DOMAIN: https://console.sandbox.tipalti.com
+
+    iamRoleStatements:
+        - Effect: Allow
+          Action:
+              - sqs:sendMessage
+          Resource: '*'
+
+custom:
+    defaultStage: ${file(../../../serverless.common.yml):custom.defaultStage}
+    stage: ${file(../../../serverless.common.yml):custom.stage}
+    baseApiPath: ${file(../../../serverless.common.yml):custom.baseApiPath}
+    alias: ${file(../../../serverless.common.yml):custom.alias}
+    polarisEntityPath: ${self:custom.baseApiPath}/antar
+    cronoptions:
+        prod: true
+        dev: true
+        pre-prod: false
+        cp-e2e: true
+        stage: true
+        hotfix: true
+        other: false
+    cronenabled: ${self:custom.cronoptions.${self:custom.stage}, self:custom.cronoptions.other}
+
+    bundle:
+        sourcemaps: true
+        forceExclude:
+            - datman-helpers
+            - datman-models
+        linting: false #Ignore for compilation
+        ignorePackages:
+            - pg-hstore
+
+    #Locally
+    serverless-offline:
+        httpPort: 8006
+        lambdaPort: 8005
+        printOutput: true
+        useChildProcesses: true
+
+    output:
+        file: stack-outputs/customer-${self:provider.alias}.yml
+
+functions:
+    - ${file(functions.yml)}
+
+resources:
+    # API Gateway Errors
+    - ${file(api-gateway-errors.yml)}

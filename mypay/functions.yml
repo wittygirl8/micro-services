@@ -1,0 +1,129 @@
+createSessionInternal:
+    handler: functions/create-session-handler.createSessionInternal
+    events:
+        - http:
+              path: ${self:custom.mypayEntityPath}/internal/session/create
+              method: post
+              cors: true
+        - schedule:
+              rate: rate(2 minutes)
+              enabled: ${self:custom.enableKeepWarm}
+              input:
+                  keep-warm: true
+
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+
+createSale:
+    handler: functions/create-sale-handler.createSale
+    timeout: 300
+    events:
+        - http:
+              path: ${self:custom.mypayEntityPath}/sale/create
+              method: post
+              cors: true
+        - schedule:
+              rate: rate(2 minutes)
+              enabled: ${self:custom.enableKeepWarm}
+              input:
+                  keep-warm: true
+    environment:
+        SMS_QUEUE_URL:
+            'Fn::ImportValue': SendSMSQueueFifoUrl-${self:custom.alias}
+        EMAIL_QUEUE_URL:
+            'Fn::ImportValue': SendEmailQueueFifoUrl-${self:custom.alias}
+        LOCAL_QUEUE_URL: https://sqs.eu-west-1.amazonaws.com/584634042267/SendSMSQueue-stage.fifo
+        PUSH_NOTIFICATION_QUEUE_URL:
+            'Fn::ImportValue': PushNotificationQueueFifoUrl-${self:custom.alias}
+        LOCAL_PUSH_NOTIFICATION_QUEUE_URL: https://sqs.eu-west-1.amazonaws.com/584634042267/PushNotificationQueue-stage.fifo
+
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+
+redirectFromBank:
+    handler: functions/redirect-bank-handler.redirectFromBank
+    timeout: 300
+    events:
+        - http:
+              path: ${self:custom.mypayEntityPath}/bank/redirect
+              method: post
+              cors: true
+    environment:
+        SMS_QUEUE_URL:
+            'Fn::ImportValue': SendSMSQueueFifoUrl-${self:custom.alias}
+        EMAIL_QUEUE_URL:
+            'Fn::ImportValue': SendEmailQueueFifoUrl-${self:custom.alias}
+        LOCAL_QUEUE_URL: https://sqs.eu-west-1.amazonaws.com/584634042267/SendSMSQueue-dev.fifo
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+
+validateSession:
+    handler: functions/validate-session-handler.validateSession
+    events:
+        - http:
+              path: ${self:custom.mypayEntityPath}/session/validate
+              method: post
+              cors: true
+        - schedule:
+              rate: rate(2 minutes)
+              enabled: ${self:custom.enableKeepWarm}
+              input:
+                  keep-warm: true
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+
+dnaWebhook:
+    handler: functions/dna-sale-webhook-handler.main
+    timeout: 300
+    events:
+        - http:
+              path: ${self:custom.mypayEntityPath}/dna/webhook
+              method: post
+              cors: true
+    environment:
+        SMS_QUEUE_URL:
+            'Fn::ImportValue': SendSMSQueueFifoUrl-${self:custom.alias}
+        EMAIL_QUEUE_URL:
+            'Fn::ImportValue': SendEmailQueueFifoUrl-${self:custom.alias}
+        LOCAL_QUEUE_URL: https://sqs.eu-west-1.amazonaws.com/584634042267/SendSMSQueue-dev.fifo
+        PUSH_NOTIFICATION_QUEUE_URL:
+            'Fn::ImportValue': PushNotificationQueueFifoUrl-${self:custom.alias}
+        LOCAL_PUSH_NOTIFICATION_QUEUE_URL: https://sqs.eu-west-1.amazonaws.com/584634042267/PushNotificationQueue-dev.fifo
+
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+
+SaleNotification:
+    handler: functions/sale-notification-handler.main
+    events:
+        - http:
+              path: ${self:custom.mypayEntityPath}/sale/notification
+              method: post
+              cors: true
+        - schedule:
+              rate: rate(2 minutes)
+              enabled: ${self:custom.enableKeepWarm}
+              input:
+                  keep-warm: true
+authRedirect3dsv2:
+    handler: functions/redirect-bank-3dsv2-handler.redirectFromBankV2
+    timeout: 300
+    events:
+        - http:
+              path: ${self:custom.mypayEntityPath}/bank/redirect/3dsv2
+              method: post
+              cors: true
+    environment:
+        SMS_QUEUE_URL:
+            'Fn::ImportValue': SendSMSQueueFifoUrl-${self:custom.alias}
+        EMAIL_QUEUE_URL:
+            'Fn::ImportValue': SendEmailQueueFifoUrl-${self:custom.alias}
+        LOCAL_QUEUE_URL: https://sqs.eu-west-1.amazonaws.com/584634042267/SendSMSQueue-dev.fifo
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}

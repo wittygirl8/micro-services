@@ -1,0 +1,66 @@
+service: datman-paystack
+
+plugins:
+    - serverless-offline
+    - serverless-bundle
+    # - serverless-aws-alias
+
+provider:
+    name: aws
+    # runtime: nodejs12.x
+    # runtime: nodejs14.x
+    region: eu-west-1
+    tracing:
+        apiGateway: true
+        lambda: true
+    aliasStage:
+        loggingLevel: 'ERROR'
+        dataTraceEnabled: true
+    alias: loc
+    environment:
+        PAYSTACK_PAYLOAD_DECRYPTION_KEY: p87aAzmPkU!=jJUr@Q%$dXznMLRfFuTF
+        PAYSTACK_REFUND_API_KEY: )C4QJ![rKGip58kqt06G49e
+        PAYSTACK_SECRET_KEY: sk_test_58a1dff01cf5f3e8f8244d3a4bfbd3d4ddd081be
+        PAYSTACK_API_DOMAIN: https://api.paystack.co
+        PAYSTACK_BACKEND_ENDPOINT: http://localhost:4009/dev/api/v1
+        
+
+    iamRoleStatements:
+        - Effect: Allow
+          Action:
+              - sqs:sendMessage
+          Resource: '*'
+
+custom:
+    defaultStage: ${file(../../../serverless.common.yml):custom.defaultStage}
+    stage: ${file(../../../serverless.common.yml):custom.stage}
+    baseApiPath: ${file(../../../serverless.common.yml):custom.baseApiPath}
+    alias: 'loc'
+    environmentName: ${opt:ENVIRONMENT_NAME,'cp'}
+    serviceName: ${opt:SERVICE_NAME,'datman-chandra'}
+    bundle:
+        sourcemaps: true
+        forceExclude:
+            - datman-helpers
+            - datman-models
+        linting: false #Ignore for compilation
+        ignorePackages:
+            - pg-hstore
+
+    #Locally
+    serverless-offline:
+        httpPort: 4009
+        lambdaPort: 5009
+        printOutput: true
+        useChildProcesses: true
+
+    output:
+        file: stack-outputs/customer-${self:provider.alias}.yml
+
+functions:
+    # - ${file(functions.yml)}
+    - ${file(functions_v1.yml)}
+
+resources:
+    # API Gateway Errors
+    - ${file(api-gateway-errors.yml)}

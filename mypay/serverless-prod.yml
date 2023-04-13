@@ -1,0 +1,82 @@
+service: datman-mypay-b
+
+plugins:
+    - serverless-bundle
+    # - serverless-aws-alias
+
+provider:
+    name: aws
+    runtime: nodejs12.x
+    region: eu-west-1
+    timeout: 30
+    aliasStage:
+        loggingLevel: 'ERROR'
+        dataTraceEnabled: true
+    vpc:
+        securityGroupIds:
+            - ${opt:SECURITY_GROUP_ID,'sg-096f90a130ecc3b3b'}
+        subnetIds:
+            - ${opt:SUBNET_A,'subnet-0473ef53ddb4c55de'}
+            - ${opt:SUBNET_B,'subnet-0ad4247942baa5f8c'}
+    environment:
+        STAGE: ${self:custom.stage}
+        ALIAS: ${self:custom.alias}
+        DB_HOST: ${file(../../resources/credentials/db.yml):db-host-${self:custom.alias}}
+        DB_DATABASE: ${file(../../resources/credentials/db.yml):db-database-${self:custom.alias}}
+        DB_USERNAME: ${file(../../resources/credentials/db.yml):db-username-${self:custom.alias}}
+        DB_PASSWORD: ${file(../../resources/credentials/db.yml):db-password-${self:custom.alias}}
+        MYPAY_BANK_REDIRECT_URL: ${file(../../resources/credentials/domains.yml):mypay-bank-redirect-url-${self:custom.alias}}
+        MYPAY_FRONTEND_REDIRECT_URL: ${file(../../resources/credentials/domains.yml):mypay-frontend-redirect-url-${self:custom.alias}}
+        BIFROST_ENDPOINTS: ${file(../../resources/credentials/domains.yml):BIFROST_API_ENDPOINT}
+        BIFROST_API_TOKEN: ${file(../../resources/credentials/api-tokens.yml):BIFROST_API_TOKEN}
+        SIMULATOR_SUCCESS: 'success@simulator.amazonses.com'
+        DNA_WEBHOOK_URL: ${ssm:/prod/gateway/dna_webhook}
+        DNA_RETURN_URL: 'https://portal.omni-pay.com/virtual-terminal'
+        DNA_TERMINAL_ID: ${ssm:/prod/gateway/dna_terminal}
+        DNA_CLIENT_SECRET: ${ssm:/prod/gateway/dna_client_secret}
+        DNA_CLIENT_ID: ${ssm:/prod/gateway/dna_client_id}
+        DNA_SCOPE: 'payment integration_embedded'
+        DNA_BASE_URL: ${ssm:/prod/gateway/base_url_dna}
+        DNA_SDK_URL: 'https://pay.dnapayments.com/checkout/payment-api.js'
+        DNA_IS_TEST_MODE: false
+
+    iamRoleStatements:
+        - Effect: Allow
+          Action:
+              - rds-db:connect
+          Resource: 'arn:aws:rds-db:eu-west-1:584634042267:dbuser:prx-06455dd61dfe7f3e0/*'
+        - Effect: Allow
+          Action:
+              - sqs:*
+              - ses:*
+              - sns:*
+          Resource: '*'
+
+custom:
+    defaultStage: ${file(../../../serverless.common.yml):custom.defaultStage}
+    resourcesStages: ${file(../../../serverless.common.yml):custom.resourcesStages}
+    resourceStage: ${file(../../../serverless.common.yml):custom.resourcesStage}
+    stage: ${file(../../../serverless.common.yml):custom.stage}
+    baseApiPath: ${file(../../../serverless.common.yml):custom.baseApiPath}
+    alias: ${file(../../../serverless.common.yml):custom.alias}
+    mypayEntityPath: ${self:custom.baseApiPath}
+    enableKeepWarm: true
+
+    bundle:
+        forceExclude:
+            - datman-helpers
+            - datman-models
+        linting: false #Ignore for compilation
+        ignorePackages:
+            - pg-hstore
+            # only on aws
+            - ../../../layers/helper_lib/src
+            - ../../../layers/models_lib/src
+            - ../../../../layers/helper_lib/src
+            - ../../../../layers/models_lib/src
+
+functions:
+    - ${file(functions.yml)}
+resources:
+    # API Gateway Errors
+    - ${file(api-gateway-errors.yml)}

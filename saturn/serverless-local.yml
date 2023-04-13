@@ -1,0 +1,76 @@
+service: datman-saturn
+
+plugins:
+    - serverless-offline
+    - serverless-bundle
+    - serverless-aws-alias
+
+provider:
+    name: aws
+    runtime: nodejs12.x
+    region: eu-west-1
+    aliasStage:
+        loggingLevel: 'ERROR'
+        dataTraceEnabled: true
+    environment:
+        # COGNITO_USER_POOL_ID: ${file(../../resources/stack-outputs/cognito-${self:custom.stage}.yml):CognitoUserPoolId}
+        # COGNITO_CLIENT_ID: ${file(../../resources/stack-outputs/cognito-${self:custom.stage}.yml):CognitoUserPoolClientId}
+        # STAGE: ${self:custom.stage}
+        # DB_RESOURCE_ARN: ${file(../../resources/stack-outputs/database-${self:custom.stage}.yml):DbClusterArn}
+        # SECRET_ARN: ${file(../../resources/stack-outputs/database-${self:custom.stage}.yml):SecretManagerArn}
+        T2S_API_TOKEN: 'laksjdflkasjdfaksdflasd'
+        SWITCH_PAYLOD_ENCRYPTION_KEY: 'p87aAzmPkU!=jJUr@Q%$dXznMLRfFuTF'
+        EARTH_PAYLOAD_ENCRYPTION_KEY: p87aAzmPkU!=jJUr@Q%$dXznMLRfFuTF
+        OPTOMANY_PAYLOAD_ENCRYPTION_KEY: 'pSk0qDEIQxh6PjgSSheg0nYgE00ezwkj'
+        EARTH_ENDPOINT: http://localhost:3000/earth
+        STRIPE_PAYLOAD_ENCRYPTION_KEY: pSk0qDEIQxh6PjgSSheg0nYgE00ezwkj
+        STRIPE_CREDENTIALS: '{"eatappy":{"sk":"sk_test_51IU7UTGmDIpBjjhS0LTNsy7bJkq6xCE5lyTqxvFIFYct1N0yqGNS7648DHXrIwoHdvyB3HHyrHaI05Vfj9WquA0V00pE0zFUBm","pk":"pk_test_51IU7UTGmDIpBjjhSkP0N3WFRlhCfZB65PuDLwnZ00GOTm6H6qJtMKV2XC8LtKR1GTyfU95KWnzQv1AhZg5Ii8Fgw00GlDS7OXR","wh":"whsec_ghbRbZAKZxeOe46eEA2RmTPFppUWVtUl"},"datman":{"sk":"sk_test_51FCikEAS5mTVwebyutHwTfQaMvoUq4joLaogOrMfAuNmeW6Ct8bfFRAuKrXQh5UhUEYifhPThnMjDDHP0oBe1kWp006G5KVVw9","pk":"pk_test_8L7ouUdD1yQ92FyXEoa1xEHn00WeyjTCoQ","wh":"whsec_t6RJplH5RbtNhh9HniXu7Jrb6SP4P6Lm"},"master_yogo":{"sk":"sk_test_FTkgy6J0ASE6VVAlFvrbSVQY","pk":"pk_test_UsMe3O3oMv3SFs0UeBX3B6US","wh":"whsec_TAhwKKGxeEfveWpJRWvKLoKel1lJxe5p"}}'
+        STRIPE_ENDPOINT: http://localhost:4004/dev/api/v1/saturn
+        DATMAN_GATEWAY_API_KEY: 9NEhoAJpbucKsysNkFXoAo7BMyXdEKxW
+    # iamRoleStatements:
+    #     - Effect: Allow
+    #       Action:
+    #           - rds-data:ExecuteStatement
+    #           - rds-data:BatchExecuteStatement
+    #           - rds-data:BeginTransaction
+    #           - rds-data:CommitTransaction
+    #           - rds-data:RollbackTransaction
+    #       Resource: '*'
+    #     - Effect: Allow
+    #       Action:
+    #           - secretsmanager:GetSecretValue
+    #       Resource:
+    #           'Fn::ImportValue': ${self:custom.stage}-SecretManagerArn
+
+custom:
+    defaultStage: ${file(../../../serverless.common.yml):custom.defaultStage}
+    stage: ${file(../../../serverless.common.yml):custom.stage}
+    baseApiPath: ${file(../../../serverless.common.yml):custom.baseApiPath}
+    alias: ${file(../../../serverless.common.yml):custom.alias}
+    saturnEntityPath: ${self:custom.baseApiPath}/saturn
+
+    bundle:
+        sourcemaps: true
+        forceExclude:
+            - datman-helpers
+            - datman-models
+        linting: false #Ignore for compilation
+        ignorePackages:
+            - pg-hstore
+
+    #Locally
+    serverless-offline:
+        httpPort: 4004
+        lambdaPort: 5004
+        printOutput: true
+        useChildProcesses: true
+
+    output:
+        file: stack-outputs/customer-${self:provider.alias}.yml
+
+functions:
+    - ${file(functions.yml)}
+
+resources:
+    # API Gateway Errors
+    - ${file(api-gateway-errors.yml)}

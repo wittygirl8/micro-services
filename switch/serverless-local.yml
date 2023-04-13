@@ -1,0 +1,87 @@
+service: datman-microservices-switch
+
+plugins:
+    - serverless-offline
+    - serverless-bundle
+    - serverless-aws-alias
+package:
+    individually: true
+
+provider:
+    name: aws
+    runtime: nodejs12.x
+    region: us-east-1
+    tracing:
+        apiGateway: true
+        lambda: true
+    aliasStage:
+        loggingLevel: 'ERROR'
+        dataTraceEnabled: true
+    environment:
+        # COGNITO_USER_POOL_ID: ${file(../../resources/stack-outputs/cognito-${self:custom.stage}.yml):CognitoUserPoolId}
+        # COGNITO_CLIENT_ID: ${file(../../resources/stack-outputs/cognito-${self:custom.stage}.yml):CognitoUserPoolClientId}
+        # STAGE: ${self:custom.stage}
+        # DB_RESOURCE_ARN: ${file(../../resources/stack-outputs/database-${self:custom.stage}.yml):DbClusterArn}
+        # SECRET_ARN: ${file(../../resources/stack-outputs/database-${self:custom.stage}.yml):SecretManagerArn}
+        T2S_API_TOKEN: 'LGYJK9yF0L1fcp5vEyrA9mQ8V5A5CacdG0MgX8KLJBQKOJ5g7kH6un3dgt8Ir8JW'
+        T2S_DB_HOST: datman-gateway-sit-proxy-NLB-aa7ea3681d96ca8d.elb.eu-west-2.amazonaws.com
+        T2S_DB_DATABASE: qat
+        T2S_DB_USERNAME: gateway_db_user
+        T2S_DB_PASSWORD: PgPzcD65+!epX@h84sj56PXUzx+Ahr
+
+        STRIPE_PAYLOD_ENCRYPTION_KEY: pSk0qDEIQxh6PjgSSheg0nYgE00ezwkj
+        STRIPE_ENDPOINT: http://localhost:4004/dev/api/v1/saturn
+
+        EARTH_PAYLOAD_ENCRYPTION_KEY: p87aAzmPkU!=jJUr@Q%$dXznMLRfFuTF
+        EARTH_ENDPOINT: 'http://localhost:3000/earth'
+
+        OPTOMANY_PAYLOAD_ENCRYPTION_KEY: pSk0qDEIQxh6PjgSSheg0nYgE00ezwkj
+        OPTOMANY_ENDPOINT: https://legecy-release.datmanpay.com/opto
+
+        BARCLAYS_PAYLOAD_ENCRYPTION_KEY: pSk0qDEIQxh6PjgSSheg0nYgE00ezwkj
+        BARCLAYS_ENDPOINT: https://legecy-release.datmanpay.com
+
+        SWITCH_PAYLOD_ENCRYPTION_KEY: pSk0qDEIQxh6PjgSSheg0nYgE00ezwkj
+        T2S_API_AUTHORIZE_TOKEN: 720AAEA92F57487A6C13FE50812D107F001
+        ANTAR_API_BASE_URL: https://oveynowewl.execute-api.eu-west-1.amazonaws.com/stage/api/v1/antar
+        ANTAR_GFO_API_AUTHORIZE_TOKEN: dx4ZlOwVFR9GeqTs1X0gL5cu1orBdIXg
+        DNA_HOSTED_FORM: '{"encriptionKey":"p87aAzmPkU!=jJUr@Q%$dXznMLRfFuTF","authBaseUrl":"https://test-oauth.dnapayments.com","scope":"payment integration_hosted","clientId":"my_pay_limited","clientSecret":"J.iE307vteDYs5gLkhpSOV-diIxq3*m5ultyr2veSK=j13j7Gq6*JK-9UEGldgN5","terminalId":"d4658a9f-f397-411b-95b7-4a6be1520a4c","baseUrl":"https://test-api.dnapayments.com","apiAuthToken":"dx4ZlOwVFR9GeqTs1X0gL5cu1orBdIXg"}'
+
+    iamRoleStatements:
+        - Effect: Allow
+          Action:
+              - sqs:sendMessage
+          Resource: '*'
+
+custom:
+    defaultStage: ${file(../../../serverless.common.yml):custom.defaultStage}
+    stage: ${file(../../../serverless.common.yml):custom.stage}
+    baseApiPath: ${file(../../../serverless.common.yml):custom.baseApiPath}
+    alias: ${file(../../../serverless.common.yml):custom.alias}
+    switchEntityPath: ${self:custom.baseApiPath}/switch
+
+    bundle:
+        sourcemaps: true
+        forceExclude:
+            - datman-helpers
+            - datman-models
+        linting: false #Ignore for compilation
+        ignorePackages:
+            - pg-hstore
+
+    #Locally
+    serverless-offline:
+        httpPort: 4102
+        lambdaPort: 5102
+        printOutput: true
+        useChildProcesses: true
+
+    output:
+        file: stack-outputs/customer-${self:provider.alias}.yml
+
+functions:
+    - ${file(functions.yml)}
+
+resources:
+    # API Gateway Errors
+    - ${file(api-gateway-errors-dev.yml)}

@@ -1,0 +1,82 @@
+service: datman-mypay
+
+plugins:
+    - serverless-offline
+    - serverless-bundle
+    - serverless-aws-alias
+
+provider:
+    name: aws
+    runtime: nodejs12.x
+    region: eu-west-1
+    aliasStage:
+        loggingLevel: 'ERROR'
+        dataTraceEnabled: true
+    environment:
+        DB_HOST: 'localhost'
+        DB_DATABASE: 'datman'
+        DB_USERNAME: 'homestead'
+        DB_PASSWORD: 'secret'
+        MYPAY_BANK_REDIRECT_URL: 'http://localhost:4003/dev/api/v1/mypay/bank/redirect'
+        # MYPAY_BANK_REDIRECT_URL: 'https://8a07-103-211-12-148.in.ngrok.io/dev/api/v1/mypay/bank/redirect'
+        MYPAY_FRONTEND_REDIRECT_URL: 'http://localhost:3000'
+        BIFROST_ENDPOINTS: 'http://localhost:4017/dev'
+        BIFROST_API_TOKEN: 'DWWgiWtgzNwV1UWjSGjIdQsf0AyKv3H6'
+        SIMULATOR_SUCCESS: 'success@simulator.amazonses.com'
+        DNA_WEBHOOK_URL: ${ssm:/dev/gateway/dna_webhook}
+        DNA_RETURN_URL: 'https://beta-portal.omni-pay.com/virtual-terminal'
+        DNA_TERMINAL_ID: '24b25f01-5182-4e4b-ac55-16ab30a6bed5'
+        DNA_CLIENT_SECRET: 't*8s=AaNQMPQYGcJpXaU3mn-u7t=vS3cek7hh2LCbQDcj2BLgngH*7jv0$Eh7bjI'
+        DNA_CLIENT_ID: 'optomany_test_integrations'
+        DNA_SCOPE: 'payment integration_embedded'
+        DNA_AUTH_URL: 'https://test-oauth.dnapayments.com/oauth2/token'
+        DNA_SDK_URL: 'https://test-pay.dnapayments.com/checkout/payment-api.js'
+        DNA_IS_TEST_MODE: true
+    # iamRoleStatements:
+    #     - Effect: Allow
+    #       Action:
+    #           - rds-data:ExecuteStatement
+    #           - rds-data:BatchExecuteStatement
+    #           - rds-data:BeginTransaction
+    #           - rds-data:CommitTransaction
+    #           - rds-data:RollbackTransaction
+    #       Resource: '*'
+    #     - Effect: Allow
+    #       Action:
+    #           - secretsmanager:GetSecretValue
+    #       Resource:
+    #           'Fn::ImportValue': ${self:custom.stage}-SecretManagerArn
+
+custom:
+    defaultStage: ${file(../../../serverless.common.yml):custom.defaultStage}
+    stage: ${file(../../../serverless.common.yml):custom.stage}
+    baseApiPath: ${file(../../../serverless.common.yml):custom.baseApiPath}
+    alias: ${file(../../../serverless.common.yml):custom.alias}
+    mypayEntityPath: ${self:custom.baseApiPath}/mypay
+    enableKeepWarm: false
+
+    bundle:
+        sourcemaps: true
+        forceExclude:
+            - datman-helpers
+            - datman-models
+        linting: false #Ignore for compilation
+        ignorePackages:
+            - pg-hstore
+
+    #Locally
+    serverless-offline:
+        httpPort: 4003
+        lambdaPort: 5003
+        printOutput: true
+        useChildProcesses: true
+
+    output:
+        file: stack-outputs/customer-${self:provider.alias}.yml
+
+functions:
+    - ${file(functions.yml)}
+
+resources:
+    # API Gateway Errors
+    - ${file(api-gateway-errors.yml)}

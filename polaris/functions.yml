@@ -1,0 +1,194 @@
+PinPayoutPublisher:
+    handler: functions/pinpayment/pin-payout-publisher.pinPayoutService
+    timeout: 900
+    events:
+        # - schedule: cron(0 4 ? * 2-6 *)
+        # - http:
+        #       path: prepare/batch
+        #       method: get
+        #       cors: true
+    environment:
+        QUEUE_URL:
+            'Fn::ImportValue': PinPayoutsQueueUrl-${self:custom.alias}
+        LOCAL_QUEUE_URL: https://sqs.eu-west-1.amazonaws.com/584634042267/PinPayoutsQueue-stage
+
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+
+PinPayoutConsumer:
+    handler: functions/pinpayment/pin-payout-consumer-cron.main
+    timeout: 900
+    reservedConcurrency: 5
+    events:
+        - sqs:
+              arn:
+                  'Fn::ImportValue': PinPayoutsQueueArn-${self:custom.alias}
+              batchSize: 10
+    environment:
+        QUEUE_URL:
+            'Fn::ImportValue': PinPayoutsQueueUrl-${self:custom.alias}
+        EMAIL_QUEUE_URL:
+            'Fn::ImportValue': SendEmailQueueFifoUrl-${self:custom.alias}
+        SMS_QUEUE_URL:
+            'Fn::ImportValue': SendSMSQueueFifoUrl-${self:custom.alias}
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+
+PinPayoutDLQ:
+    handler: functions/pinpayment/pin-payout-dlq.main
+    events:
+        - sqs:
+              arn:
+                  'Fn::ImportValue': PinPayoutsQueueDLQArn-${self:custom.alias}
+              batchSize: 1
+
+ProcessPinPayoutPublisher:
+    handler: functions/pinpayment/batch-process-pin-payout-publisher.processBatchService
+    timeout: 900
+    events:
+        # - schedule: cron(0 5 ? * 2-6 *)
+        # - http:
+        #       path: process/batch
+        #       method: get
+        #       cors: true
+    environment:
+        QUEUE_URL:
+            'Fn::ImportValue': BatchProcessPinPayoutsQueueUrl-${self:custom.alias}
+        LOCAL_QUEUE_URL: https://sqs.eu-west-1.amazonaws.com/584634042267/BatchProcessPinPayoutsQueue-hotfix
+
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+
+ProcessTipaltiPublisher:
+    handler: functions/tipalti/batch-process-tipalti-publisher.processBatch
+    timeout: 900
+    events:
+        # - schedule: cron(0 6 ? * 2-6 *)
+        # - http:
+        #       path: process/batch/tipalti
+        #       method: get
+        #       cors: true
+    environment:
+        QUEUE_URL:
+            'Fn::ImportValue': BatchProcessPinPayoutsQueueUrl-${self:custom.alias}
+        LOCAL_QUEUE_URL: https://sqs.eu-west-1.amazonaws.com/584634042267/BatchProcessPinPayoutsQueue-hotfix
+
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+
+ProcessDNAPublisher:
+    handler: functions/dna/batch-process-dna-cron.processBatch
+    timeout: 900
+    events:
+        # - schedule: cron(0 6 ? * 2-6 *)
+        - http:
+              path: process/batch/dna
+              method: get
+              cors: true
+    environment:
+        QUEUE_URL:
+            'Fn::ImportValue': BatchProcessDnaQueueUrl-${self:custom.alias}
+        EMAIL_QUEUE_URL:
+            'Fn::ImportValue': SendEmailQueueFifoUrl-${self:custom.alias}
+        LOCAL_QUEUE_URL: https://sqs.eu-west-1.amazonaws.com/584634042267/BatchProcessDnaQueue-hotfix
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+
+ProcessPinPayoutConsumer:
+    handler: functions/pinpayment/batch-process-pin-payout-consumer-cron.main
+    timeout: 900
+    reservedConcurrency: 5
+    events:
+        - sqs:
+              arn:
+                  'Fn::ImportValue': BatchProcessPinPayoutsQueueArn-${self:custom.alias}
+              batchSize: 10
+        # - http:
+        #       path: process/payout
+        #       method: post
+        #       cors: true
+    environment:
+        QUEUE_URL:
+            'Fn::ImportValue': BatchProcessPinPayoutsQueueUrl-${self:custom.alias}
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+
+ProcessDnaPayoutConsumer:
+    handler: functions/dna/batch-process-dna-payout-consumer-cron.main
+    timeout: 900
+    reservedConcurrency: 5
+    events:
+        - sqs:
+              arn:
+                  'Fn::ImportValue': BatchProcessDnaQueueArn-${self:custom.alias}
+              batchSize: 10
+        - http:
+              path: process/payout
+              method: post
+              cors: true
+    environment:
+        QUEUE_URL:
+            'Fn::ImportValue': BatchProcessDnaQueueUrl-${self:custom.alias}
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+
+ProcessPinPayoutDLQ:
+    handler: functions/pinpayment/batch-process-pin-payout-dlq.main
+    events:
+        - sqs:
+              arn:
+                  'Fn::ImportValue': BatchProcessPinPayoutsQueueDLQArn-${self:custom.alias}
+              batchSize: 1
+
+ProcessDnaDLQ:
+    handler: functions/dna/batch-process-dna-dlq.main
+    events:
+        - sqs:
+              arn:
+                  'Fn::ImportValue': BatchProcessDnaQueueDLQArn-${self:custom.alias}
+              batchSize: 1
+
+PinPaymentWebhook:
+    handler: functions/pinpayment/pin-payout-webhook-api.main
+    events:
+        - http:
+              path: /payout/webhook
+              method: post
+              cors: true
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+
+TipaltiWebhook:
+    handler: functions/tipalti/tipalti-payout-webhook-handler.main
+    events:
+        # - http:
+        #       path: /webhook/tipalti
+        #       method: post
+        #       cors: true
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+
+SendDnaPayoutEmail:
+    handler: functions/dna/batch-process-dna-email-cron.sendAttachment
+    timeout: 900
+    events:
+        # - schedule: cron(0 6 ? * 2-6 *)
+        - http:
+              path: /email/file
+              method: get
+              cors: true
+    environment:
+        EMAIL_QUEUE_URL:
+            'Fn::ImportValue': SendEmailQueueFifoUrl-${self:custom.alias}
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}

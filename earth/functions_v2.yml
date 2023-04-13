@@ -1,0 +1,121 @@
+createSale_v2:
+    handler: functions/create-sale-handler.createSale
+    tracing: Active # enable tracing
+    events:
+        - http:
+              path: ${self:custom.earthEntityPath}/v2/sale/create
+              method: post
+              cors: true
+    environment:
+        QUEUE_URL:
+            'Fn::ImportValue': NotifyOrderStatusQueueUrl-${self:custom.alias}
+        LOCAL_QUEUE_URL: http://localhost:9324/queue/queueFifo.fifo
+        EMAIL_QUEUE_URL:
+            'Fn::ImportValue': SendEmailQueueFifoUrl-${self:custom.alias}
+
+        QUEUE_URL_MASTERTOKEN:
+            'Fn::ImportValue': MasterTokenSQueueUrl-${self:custom.alias}
+        LOCAL_QUEUE_URL_MASTERTOKEN: http://localhost:9324/queue/queueFifo
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+createTokenSale_v2:
+    handler: functions/create-token-sale-handler.createTokenSale
+    tracing: Active # enable tracing
+    events:
+        - http:
+              path: ${self:custom.earthEntityPath}/v2/sale/token/create
+              method: post
+              cors: true
+    environment:
+        QUEUE_URL:
+            'Fn::ImportValue': NotifyOrderStatusQueueUrl-${self:custom.alias}
+        LOCAL_QUEUE_URL: http://localhost:9324/queue/queueFifo.fifo
+        EMAIL_QUEUE_URL:
+            'Fn::ImportValue': SendEmailQueueFifoUrl-${self:custom.alias}
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+authRedirect_v2:
+    handler: functions/auth-redirect-handler.redirect
+    tracing: Active # enable tracing
+    events:
+        - http:
+              path: ${self:custom.earthEntityPath}/v2/sale/redirect
+              method: post
+              cors: true
+    environment:
+        QUEUE_URL:
+            'Fn::ImportValue': NotifyOrderStatusQueueUrl-${self:custom.alias}
+        LOCAL_QUEUE_URL: http://localhost:9324/queue/queueFifo.fifo
+        EMAIL_QUEUE_URL:
+            'Fn::ImportValue': SendEmailQueueFifoUrl-${self:custom.alias}
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+refundSale_v2:
+    handler: functions/refund-sale-handler.refundSale
+    tracing: Active # enable tracing
+    events:
+        - http:
+              path: ${self:custom.earthEntityPath}/v2/sale/refund
+              method: post
+              cors: true
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+decryptT2sData_v2:
+    handler: functions/decrypt-t2s-data-handler.decryptT2SData
+    tracing: true # enable tracing
+    memorySize: 3008
+    events:
+        - http:
+              path: ${self:custom.earthEntityPath}/v2/decrypt
+              method: post
+              cors: true
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+cancelPayment_v2:
+    handler: functions/cancel-payment-handler.pay
+    tracing: Active # enable tracing
+    events:
+        - http:
+              path: ${self:custom.earthEntityPath}/v2/sale/cancel
+              method: post
+              cors: true
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+deleteTokenGateway_v2:
+    handler: functions/delete-token-gateway-handler.deleteTokenGateway
+    tracing: Active # enable tracing
+    events:
+        - http:
+              path: ${self:custom.earthEntityPath}/v2/cc-token/{token}
+              method: post
+              cors: true
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+kountChargebackGateway_v2:
+    handler: functions/kount-chargeback-handler.kountChargebacks
+    events:
+        - http:
+              path: ${self:custom.earthEntityPath}/v2/kount/chargeback
+              method: post
+              cors: true
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}
+refundCHSale_v2:
+    handler: functions/refund-sale-handler-ch.refundSale
+    tracing: Active # enable tracing
+    events:
+        - http:
+              path: ${self:custom.earthEntityPath}/v1/sale/ch/refund
+              method: post
+              cors: true
+    layers:
+        - ${file(../../layers/layers-outputs.yml):HelperlibLambdaLayerQualifiedArn}
+        - ${file(../../layers/layers-outputs.yml):ModelslibLambdaLayerQualifiedArn}

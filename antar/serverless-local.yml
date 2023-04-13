@@ -1,0 +1,67 @@
+service: datman-microservices-antar
+
+plugins:
+    - serverless-offline
+    - serverless-bundle
+    - serverless-aws-alias
+
+provider:
+    name: aws
+    runtime: nodejs12.x
+    region: us-east-1
+    tracing:
+        apiGateway: true
+        lambda: true
+    aliasStage:
+        loggingLevel: 'ERROR'
+        dataTraceEnabled: true
+    environment:
+        STAGE: ${self:custom.stage}
+        ALIAS: ${self:custom.alias}
+        ADYEN_WEBHOOK_AUTH_USERNAME: datman
+        ADYEN_WEBHOOK_AUTH_PASSWORD: datman
+        ADYEN_API_AUTH_USERNAME: ws_204828@Company.FoodHubLimited
+        ADYEN_API_AUTH_PASSWORD: cQK#EVdc-+#)+6Lhgwc~htfJC
+        ADYEN_API_AUTH_TOKEN: AQEthmfxJojIbBxBw0exgG89s9SXSYhIQ7VFV2F+03p2vl2Fu2AcAjFHbxgRoexYEMFdWw2+5HzctViMSCJMYAc=-AT2jrTPQrDoAYu1Vww9WnKwDIxvrDGCk+M2GPVaclyI=-jB>p*,3sh$]n,]$m
+        ADYEN_API_ENDPOINT: https://checkout-test.adyen.com/v68
+        ADYEN_MERCHANT_ACCOUNT_NAME: FoodHubLimitedECOM
+        ANTAR_GFO_API_AUTHORIZE_TOKEN: dx4ZlOwVFR9GeqTs1X0gL5cu1orBdIXg
+
+    iamRoleStatements:
+        - Effect: Allow
+          Action:
+              - sqs:sendMessage
+          Resource: '*'
+
+custom:
+    defaultStage: ${file(../../../serverless.common.yml):custom.defaultStage}
+    stage: ${file(../../../serverless.common.yml):custom.stage}
+    baseApiPath: ${file(../../../serverless.common.yml):custom.baseApiPath}
+    alias: ${file(../../../serverless.common.yml):custom.alias}
+    antarEntityPath: ${self:custom.baseApiPath}/antar
+
+    bundle:
+        sourcemaps: true
+        forceExclude:
+            - datman-helpers
+            - datman-models
+        linting: false #Ignore for compilation
+        ignorePackages:
+            - pg-hstore
+
+    #Locally
+    serverless-offline:
+        httpPort: 4202
+        lambdaPort: 5202
+        printOutput: true
+        useChildProcesses: true
+
+    output:
+        file: stack-outputs/customer-${self:provider.alias}.yml
+
+functions:
+    - ${file(functions.yml)}
+
+resources:
+    # API Gateway Errors
+    - ${file(api-gateway-errors.yml)}

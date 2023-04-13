@@ -1,0 +1,92 @@
+service: datman-earth-b
+
+plugins:
+    - serverless-bundle
+    # - serverless-aws-alias
+
+provider:
+    name: aws
+    runtime: nodejs12.x
+    region: eu-west-1
+    timeout: 30
+    tracing:
+        apiGateway: true
+        lambda: true
+    aliasStage:
+        loggingLevel: 'ERROR'
+        dataTraceEnabled: true
+    vpc:
+        securityGroupIds:
+            - ${opt:SECURITY_GROUP_ID,'sg-096f90a130ecc3b3b'}
+        subnetIds:
+            - ${opt:SUBNET_A,'subnet-0473ef53ddb4c55de'}
+            - ${opt:SUBNET_B,'subnet-0ad4247942baa5f8c'}
+    environment:
+        STAGE: ${self:custom.stage}
+        ALIAS: ${self:custom.alias}
+        T2S_API_TOKEN: ${file(../../resources/credentials/api-tokens.yml):t2s-api-token-${self:custom.alias}}
+        DB_HOST: ${file(../../resources/credentials/db.yml):db-host-${self:custom.alias}}
+        DB_DATABASE: ${file(../../resources/credentials/db.yml):db-database-${self:custom.alias}}
+        DB_USERNAME: ${file(../../resources/credentials/db.yml):db-username-${self:custom.alias}}
+        DB_PASSWORD: ${file(../../resources/credentials/db.yml):db-password-${self:custom.alias}}
+        T2S_DB_HOST: ${file(../../resources/credentials/t2s-db.yml):db-host-${self:custom.alias}}
+        T2S_DB_DATABASE: ${file(../../resources/credentials/t2s-db.yml):db-database-${self:custom.alias}}
+        T2S_DB_USERNAME: ${file(../../resources/credentials/t2s-db.yml):db-username-${self:custom.alias}}
+        T2S_DB_PASSWORD: ${file(../../resources/credentials/t2s-db.yml):db-password-${self:custom.alias}}
+        SWITCH_PAYLOD_ENCRYPTION_KEY: ${file(../../resources/credentials/switich-encryption.yml):switch-paylod-encryption-key-${self:custom.alias}}
+        EARTH_PAYLOAD_ENCRYPTION_KEY: ${file(../../resources/credentials/switich-encryption.yml):earth-payload-encryption-key-${self:custom.alias}}
+        MX_PAYLOAD_ENCRYPTION_KEY: ${file(../../resources/credentials/tokenisation.yml):mx-payload-encryption-key-${self:custom.alias}}
+        OPTOMANY_PAYLOAD_ENCRYPTION_KEY: ${file(../../resources/credentials/switich-encryption.yml):optomany-payload-encryption-key-${self:custom.alias}}
+        EARTH_ENDPOINT: ${file(../../resources/credentials/domains.yml):earth-endpoint-${self:custom.alias}}
+        EARTH_API_ENDPOINT: ${file(../../resources/credentials/domains.yml):earth-api-endpoint-${self:custom.alias}}
+        KOUNT_API_KEY: ${file(../../resources/credentials/api-tokens.yml):kount-api-key-${self:custom.alias}}
+        CS_API_USERNAME: ${file(../../resources/credentials/cardstream-credentials.yml):CS_API_USERNAME}
+        CS_API_PASSWORD: ${file(../../resources/credentials/cardstream-credentials.yml):CS_API_PASSWORD}
+        MERCHANT_SIGNATUREKEY_OPTO: ${file(../../resources/credentials/tokenisation.yml):opto-merchant-signature-key-${self:custom.alias}}
+        OPTOMANY_GATEWAY_URL: ${file(../../resources/credentials/tokenisation.yml):optomany-gateway-url-${self:custom.alias}}
+        MERCHANT_STOREID_OPTO: ${file(../../resources/credentials/tokenisation.yml):opto-merchant-store-id-${self:custom.alias}}
+        MERCHANT_SIGNATUREKEY_ID_OPTO: ${file(../../resources/credentials/tokenisation.yml):opto-merchant-signature-key-id-${self:custom.alias}}
+        COUNTRY_ID_OPTO: ${file(../../resources/credentials/tokenisation.yml):opto-country-id-${self:custom.alias}}
+        MERCHANT_DEPARTMENTID_OPTO: ${file(../../resources/credentials/tokenisation.yml):opto-merchant-department-id-${self:custom.alias}}
+        SIMULATOR_SUCCESS: 'success@simulator.amazonses.com'
+
+    iamRoleStatements:
+        - Effect: Allow
+          Action:
+              - rds-db:connect
+          Resource: 'arn:aws:rds-db:eu-west-1:584634042267:dbuser:prx-06455dd61dfe7f3e0/*'
+        - Effect: Allow
+          Action:
+              - sqs:sendMessage
+          Resource: '*'
+
+custom:
+    defaultStage: ${file(../../../serverless.common.yml):custom.defaultStage}
+    resourcesStages: ${file(../../../serverless.common.yml):custom.resourcesStages}
+    resourceStage: ${file(../../../serverless.common.yml):custom.resourcesStage}
+    stage: ${file(../../../serverless.common.yml):custom.stage}
+    baseApiPath: ${file(../../../serverless.common.yml):custom.baseApiPath}
+    alias: ${file(../../../serverless.common.yml):custom.alias}
+    environmentName: ${opt:ENVIRONMENT_NAME,'cp'}
+    serviceName: ${opt:SERVICE_NAME,'datman-earth'}
+    earthEntityPath: api # changing baseApipath in comman file will impact every module
+
+    bundle:
+        forceExclude:
+            - datman-helpers
+            - datman-models
+        linting: false #Ignore for compilation
+        ignorePackages:
+            - pg-hstore
+            # only on aws
+            - ../../../layers/helper_lib/src
+            - ../../../layers/models_lib/src
+            - ../../../../layers/helper_lib/src
+            - ../../../../layers/models_lib/src
+
+functions:
+    # - ${file(functions.yml)}
+    - ${file(functions_v1.yml)}
+resources:
+    # API Gateway Errors
+    - ${file(api-gateway-errors.yml)}

@@ -1,0 +1,57 @@
+service: datman-crons
+
+plugins:
+    - serverless-offline
+    # - serverless-offline-sns
+    # - serverless-offline-sqs
+    - serverless-bundle
+
+provider:
+    name: aws
+    runtime: nodejs12.x
+    region: eu-west-1
+    timeout: 30
+    environment:
+        S3_BUCKET_CRED: '{"accessKeyId":"AKIAYQHXHQ6N77344NTK","secretAccessKey":"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"}'
+    iamRoleStatements:
+        - Effect: Allow
+          Action:
+              - sqs:*
+          Resource: '*'
+
+custom:
+    defaultStage: ${file(../../../serverless.common.yml):custom.defaultStage}
+    stage: ${file(../../../serverless.common.yml):custom.stage}
+    baseApiPath: ${file(../../../serverless.common.yml):custom.baseApiPath}
+    alias: ${file(../../../serverless.common.yml):custom.alias}
+    cronsEntityPath: ${self:custom.baseApiPath}/crons
+    #Locally
+    serverless-offline:
+        httpPort: 4007
+        lambdaPort: 5007
+        printOutput: true
+    serverless-offline-sqs:
+        apiVersion: '2012-11-05'
+        endpoint: 'http://0.0.0.0:9324'
+        region: eu-west-1
+        accessKeyId: local
+        secretAccessKey: local
+
+    bundle:
+        forceExclude:
+            - datman-helpers
+            - datman-models
+        linting: false #Ignore for compilation
+        ignorePackages:
+            - pg-hstore
+
+    cronoptions:
+        prod: false
+        dev: true
+        pre-prod: false
+        cp-e2e: true
+        stage: true
+        other: false
+    cronenabled: ${self:custom.cronoptions.${self:custom.stage}, self:custom.cronoptions.other}
+functions:
+    - ${file(functions.yml)}
